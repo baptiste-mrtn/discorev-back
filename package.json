@@ -1,0 +1,36 @@
+{
+	"name": "discorev-back",
+	"version": "1.0.0",
+	"main": "server.js",
+	"type": "module",
+	"scripts": {
+		"test": "jest",
+		"start": "node server.js"
+	},
+	"keywords": [
+		"discorev",
+		"application"
+	],
+	"author": "***REMOVED*** ***REMOVED***",
+	"license": "ISC",
+	"description": "Back-end for Discorev application",
+	"dependencies": {
+		"bcrypt": "^5.1.1",
+		"bcryptjs": "^2.4.3",
+		"body-parser": "^1.20.3",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.7",
+		"express": "^4.21.2",
+		"jsonwebtoken": "^9.0.2",
+		"multer": "^1.4.5-lts.1",
+		"mysql2": "^3.11.5",
+		"socket.io": "^4.8.1"
+	},
+	"devDependencies": {
+		"jest": "^29.7.0",
+		"mocha": "^11.1.0",
+		"pactum": "^3.7.6",
+		"sinon": "^19.0.2",
+		"supertest": "^7.0.0"
+	}
+}
