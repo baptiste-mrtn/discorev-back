@@ -30,6 +30,7 @@ const Recruiter = {
 
 	async getRecruiterById(recruiterId) {
 		const [rows] = await db.execute("SELECT * FROM recruiters WHERE id = ?", [recruiterId]);
+		console.log("rows", rows);
 		return conversion.snakeToCamel(rows[0]);
 	},
 

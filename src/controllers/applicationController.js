@@ -6,8 +6,7 @@ const ApplicationController = {
 	async applyToJob(req, res) {
 		const { jobOfferId, notes } = req.body;
 		const userId = req.user.id; // Assurez-vous que req.user.id est défini par un middleware d'authentification
-		console.log(userId);
-		console.log(req.user);
+
 		if (!userId || !jobOfferId) {
 			return res.status(400).json({ message: "User ID and Job Offer ID are required" });
 		}
