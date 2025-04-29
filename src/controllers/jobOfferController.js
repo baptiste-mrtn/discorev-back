@@ -67,9 +67,21 @@ const JobOfferController = {
 	async getAllJobOffers(req, res) {
 		try {
 			const jobOffers = await JobOffer.getAllJobOffers();
-			return res
-				.status(200)
-				.json({ data: jobOffers, message: "Job offers retrieved successfully" });
+
+			const enrichedOffers = await Promise.all(
+				jobOffers.map(async (offer) => {
+					const company = await Recruiter.getRecruiterById(offer["recruiter_id"]);
+					return {
+						...offer,
+						company
+					};
+				})
+			);
+
+			return res.status(200).json({
+				data: enrichedOffers,
+				message: "Job offers retrieved successfully"
+			});
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
