@@ -34,10 +34,10 @@ router.delete(
 	authenticateToken,
 	DocumentPermissionsController.revokeUserPermission
 );
-router.purge(
-	"/:documentId/permissions",
-	authenticateToken,
-	DocumentPermissionsController.deleteAllPermissions
-);
+// router.purge(
+// 	"/:documentId/permissions",
+// 	authenticateToken,
+// 	DocumentPermissionsController.deleteAllPermissions
+// );
 
 export default router;
