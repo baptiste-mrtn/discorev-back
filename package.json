@@ -4,7 +4,7 @@
 	"main": "server.js",
 	"type": "module",
 	"scripts": {
-		"init": "node -e 'import(\"./config/db.js\").then(m => m.initDatabase())'",
+		"init-db": "node -e 'import(\"./config/db.js\").then(m => m.initDatabase())'",
 		"test": "jest",
 		"start": "node server.js"
 	},
