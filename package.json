@@ -4,7 +4,7 @@
 	"main": "server.js",
 	"type": "module",
 	"scripts": {
-		"init-db": "node config/init-db.js",
+		"init-db": "node sync/init-db.js",
 		"test": "jest",
 		"start": "node server.js"
 	},
