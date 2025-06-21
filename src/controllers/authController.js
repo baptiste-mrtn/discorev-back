@@ -7,7 +7,7 @@ import Recruiter from "../models/recruiterModel.js";
 
 const AuthController = {
 	async register(req, res) {
-		const { firstName, lastName, email, password, phoneNumber, profilePicture, accountType } =
+		const { firstName, lastName, email, password, phoneNumber, profilePicture, accountType, newsletter } =
 			req.body;
 
 		if (!firstName || !lastName || !email || !password || !accountType) {
@@ -23,7 +23,6 @@ const AuthController = {
 
 			// Hash the password
 			const hashedPassword = await bcrypt.hashSync(password, 10);
-
 			// Create the user
 			const userId = await User.createUser({
 				lastName,
@@ -32,7 +31,8 @@ const AuthController = {
 				password: hashedPassword,
 				phoneNumber,
 				profilePicture,
-				accountType
+				accountType,
+				newsletter
 			});
 
 			// Create a candidate or a recruiter

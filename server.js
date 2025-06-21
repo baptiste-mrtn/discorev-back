@@ -12,6 +12,7 @@ import jobOfferRoutes from './src/routes/jobOfferRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
 import applicationRoutes from './src/routes/applicationRoutes.js';
 import historyRoutes from './src/routes/historyRoutes.js';
+import sanitizeRequest from './src/middlewares/sanitizerMiddleware.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +27,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeRequest);
 
 // **Routes**
 app.use('/auth', authRoutes);
