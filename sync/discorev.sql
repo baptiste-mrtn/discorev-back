@@ -1,7 +1,6 @@
 DROP DATABASE IF EXISTS discorev;
 CREATE DATABASE discorev;
 USE discorev;
-
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(255) NOT NULL,
@@ -14,9 +13,9 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    last_login DATETIME
+    last_login DATETIME,
+    newsletter BOOLEAN
 );
-
 CREATE TABLE candidates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -33,7 +32,6 @@ CREATE TABLE candidates (
     portfolio TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE recruiters (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -48,7 +46,6 @@ CREATE TABLE recruiters (
     contact_person TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NULL,
@@ -60,7 +57,6 @@ CREATE TABLE documents (
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE document_permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     document_id INT NOT NULL,
@@ -68,7 +64,6 @@ CREATE TABLE document_permissions (
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE job_offers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     recruiter_id INT NOT NULL,
@@ -84,22 +79,27 @@ CREATE TABLE job_offers (
     status ENUM('active', 'inactive', 'draft') DEFAULT 'active',
     FOREIGN KEY (recruiter_id) REFERENCES recruiters(id) ON DELETE CASCADE
 );
-
 CREATE TABLE applications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     candidate_id INT NOT NULL,
     job_offer_id INT NOT NULL,
-    status ENUM('sent', 'viewed', 'interview', 'pending','rejected', 'accepted') DEFAULT 'sent',
+    status ENUM(
+        'sent',
+        'viewed',
+        'interview',
+        'pending',
+        'rejected',
+        'accepted'
+    ) DEFAULT 'sent',
     date_applied DATETIME DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
     FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
     FOREIGN KEY (job_offer_id) REFERENCES job_offers(id) ON DELETE CASCADE
 );
-
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    related_id INT NULL, 
+    related_id INT NULL,
     related_type ENUM('document', 'message', 'other') NOT NULL,
     type ENUM('new_document', 'new_message', 'general') NOT NULL,
     message TEXT NOT NULL,
@@ -107,7 +107,6 @@ CREATE TABLE notifications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE conversations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     participant1_id INT NOT NULL,
@@ -117,7 +116,6 @@ CREATE TABLE conversations (
     FOREIGN KEY (participant1_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (participant2_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     conversation_id INT NOT NULL,
@@ -128,15 +126,43 @@ CREATE TABLE messages (
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE histories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     related_id INT NULL,
-    related_type ENUM('document', 'message', 'auth', 'profile', 'other') NOT NULL,
-    action_type ENUM('create', 'update', 'delete', 'view', 'login', 'logout', 'other') NOT NULL,
+    related_type ENUM(
+        'document',
+        'message',
+        'auth',
+        'profile',
+        'other'
+    ) NOT NULL,
+    action_type ENUM(
+        'create',
+        'update',
+        'delete',
+        'view',
+        'login',
+        'logout',
+        'other'
+    ) NOT NULL,
     details TEXT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
+CREATE TABLE `sessions` (
+    `id` varchar(255) NOT NULL,
+    `user_id` bigint unsigned DEFAULT NULL,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `user_agent` text,
+    `payload` longtext NOT NULL,
+    `last_activity` int NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `sessions_user_id_index` (`user_id`)
+);
+CREATE TABLE `cache` (
+    `key` varchar(255) NOT NULL,
+    `value` mediumtext NOT NULL,
+    `expiration` int(11) NOT NULL,
+    PRIMARY KEY (`key`)
+);

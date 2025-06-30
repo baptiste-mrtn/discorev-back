@@ -15,7 +15,7 @@ async function initDatabase() {
 		});
 
 		// Lecture et exécution du fichier SQL
-		const sqlPath = path.join(path.resolve(), "discorev.sql"); // adapte le chemin si besoin
+		const sqlPath = path.join(path.resolve(), "sync/discorev.sql"); // adapte le chemin si besoin
 		const sql = fs.readFileSync(sqlPath, "utf8");
 
 		await connection.query(sql);
