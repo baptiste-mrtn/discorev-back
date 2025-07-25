@@ -18,17 +18,18 @@ const JobOffer = {
 			`INSERT INTO job_offers (${columns}) VALUES (${placeholders})`,
 			values
 		);
+
 		return result.insertId;
 	},
 
 	async getAllJobOffers() {
 		const [rows] = await db.execute("SELECT * FROM job_offers WHERE status != 'draft'");
-		return rows;
+		return conversion.snakeToCamel(rows);
 	},
 
 	async getJobOfferById(jobOfferId) {
 		const [rows] = await db.execute("SELECT * FROM job_offers WHERE id = ?", [jobOfferId]);
-		return rows[0];
+		return conversion.snakeToCamel(rows[0]);
 	},
 
 	async getJobOffersWithFilters(filters) {
@@ -67,11 +68,19 @@ const JobOffer = {
 		query += " ORDER BY publication_date DESC";
 
 		const [rows] = await db.execute(query, values);
-		return rows;
+		return conversion.snakeToCamel(rows);
+	},
+
+	async getJobOffersByRecruiterId(recruiterId){
+		const [rows] = await db.execute("SELECT * FROM job_offers WHERE recruiter_id = ?", [recruiterId]);
+		return conversion.snakeToCamel(rows);
 	},
 
 	async updateJobOffer(jobOfferId, updatedFields) {
+		console.log('avant conversion' + updatedFields);
 		updatedFields = await conversion.camelToSnake(updatedFields);
+		console.log('apres conversion' + updatedFields);
+
 		const fields = Object.keys(updatedFields)
 			.map((field) => `${field} = ?`)
 			.join(", ");
