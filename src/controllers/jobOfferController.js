@@ -3,9 +3,13 @@ import Application from "../models/applicationModel.js";
 import History from "../models/historyModel.js";
 import User from "../models/userModel.js";
 import Recruiter from "../models/recruiterModel.js";
+import conversion from "../utils/conversion.js";
 
 const JobOfferController = {
 	async createJobOffer(req, res) {
+
+		req.body = await conversion.snakeToCamel(req.body);
+
 		const {
 			recruiterId,
 			title,
@@ -18,13 +22,15 @@ const JobOfferController = {
 			expirationDate,
 			status
 		} = req.body;
-
+		
 		if (!recruiterId || !title || !employmentType) {
 			return res.status(400).json({ message: "Required fields are missing" });
 		}
 
-		if (expirationDate && new Date(expirationDate) < new Date()) {
-			return res.status(400).json({ message: "Expiration date must be in the future" });
+		if (expirationDate && expirationDate.trim() !== "") {
+			if (new Date(expirationDate) < new Date()) {
+				return res.status(400).json({ message: "Expiration date must be in the future" });
+			}
 		}
 
 		try {
@@ -39,13 +45,8 @@ const JobOfferController = {
 				remote: !!remote,
 				status
 			};
-
-			if (expirationDate && expirationDate.trim() !== "") {
-				jobOfferData.expirationDate = expirationDate;
-			}
-
+			
 			const jobOfferId = await JobOffer.createJobOffer(jobOfferData);
-
 			const recruiter = await Recruiter.getRecruiterById(recruiterId);
 			const userId = recruiter.userId;
 
@@ -70,7 +71,7 @@ const JobOfferController = {
 
 			const enrichedOffers = await Promise.all(
 				jobOffers.map(async (offer) => {
-					const company = await Recruiter.getRecruiterById(offer["recruiter_id"]);
+					const company = await Recruiter.getRecruiterById(offer["recruiterId"]);
 					return {
 						...offer,
 						company
@@ -119,8 +120,9 @@ const JobOfferController = {
 
 		try {
 			const jobOffer = await JobOffer.getJobOfferById(jobOfferId);
+			const recruiter = await Recruiter.getRecruiterById(jobOffer['recruiterId']);
 			return jobOffer
-				? res.status(200).json(jobOffer)
+				? res.status(200).json({message: 'Job offer found', data: {jobOffer, recruiter}})
 				: res.status(404).json({ message: "Job offer not found" });
 		} catch (error) {
 			console.error(error);
@@ -134,14 +136,6 @@ const JobOfferController = {
 
 		try {
 			await JobOffer.updateJobOffer(jobOfferId, updates);
-
-			await History.logAction({
-				userId,
-				relatedType: "job_offer",
-				actionType: "updated",
-				details: "Job offer with ID " + jobOfferId + " updated"
-			});
-
 			return res.status(200).json({ message: "Job offer updated successfully" });
 		} catch (error) {
 			console.error(error);
@@ -154,14 +148,6 @@ const JobOfferController = {
 
 		try {
 			await JobOffer.deleteJobOffer(jobOfferId);
-
-			await History.logAction({
-				userId,
-				relatedType: "job_offer",
-				actionType: "delete",
-				details: "Job offer with ID " + jobOfferId + " deleted"
-			});
-
 			return res.status(200).json({ message: "Job offer deleted successfully" });
 		} catch (error) {
 			console.error(error);

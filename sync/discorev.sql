@@ -135,6 +135,7 @@ CREATE TABLE histories (
         'message',
         'auth',
         'profile',
+        'job_offer',
         'other'
     ) NOT NULL,
     action_type ENUM(

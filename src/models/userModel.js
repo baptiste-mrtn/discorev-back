@@ -23,7 +23,8 @@ const User = {
 			.map(() => "?")
 			.join(", ");
 		const values = Object.values(userDataSnakeCase);
-
+		console.log(placeholders);
+		console.log(values);
 		const [result] = await db.execute(
 			`INSERT INTO users (${columns}) VALUES (${placeholders})`,
 			values

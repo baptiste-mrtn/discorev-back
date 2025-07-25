@@ -128,6 +128,7 @@ const AuthController = {
 			return res.status(200).json({
 				message: "Login successful",
 				token: token,
+				'refresh_token' : refreshToken,
 				data: user
 			});
 		} catch (error) {
@@ -168,6 +169,19 @@ const AuthController = {
 		} catch (err) {
 			console.error("Refresh token error:", err);
 			return res.status(403).json({ message: "Invalid or expired refresh token" });
+		}
+	},
+
+	async verifyToken(req, res){
+		const authHeader = req.headers['authorization'];
+		const token = authHeader && authHeader.split(' ')[1];
+		if (!token) return res.sendStatus(401);
+
+		try {
+			const decoded = jwt.verify(token, process.env.JWT_SECRET);
+			return res.status(200).json({ valid: true, data: decoded });
+		} catch (err) {
+			return res.status(401).json({ valid: false });
 		}
 	}
 };
