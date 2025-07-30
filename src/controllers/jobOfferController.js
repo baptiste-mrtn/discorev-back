@@ -3,13 +3,10 @@ import Application from "../models/applicationModel.js";
 import History from "../models/historyModel.js";
 import User from "../models/userModel.js";
 import Recruiter from "../models/recruiterModel.js";
-import conversion from "../utils/conversion.js";
 
 const JobOfferController = {
 	async createJobOffer(req, res) {
-
-		req.body = await conversion.snakeToCamel(req.body);
-
+		
 		const {
 			recruiterId,
 			title,

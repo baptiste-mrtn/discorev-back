@@ -89,7 +89,6 @@ const AuthController = {
 			// Verify the password
 			bcrypt.compare(password, user.password, function (err, result) {
 				if (err) {
-					console.log(err);
 					return res.status(401).json({ message: "Invalid password" });
 				}
 			});
@@ -109,26 +108,29 @@ const AuthController = {
 				{ expiresIn: "7d" }
 			);
 
+			// res.cookie('refreshToken', refreshToken, {
+			// 	httpOnly: true,
+			// 	secure: process.env.NODE_ENV === 'production',
+			// 	sameSite: 'Strict',
+			// 	maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
+			// });
+
 			res.cookie('refreshToken', refreshToken, {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'Strict',
+				secure: false,
+				sameSite: 'Lax',
 				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
 			});
 
 			// Log the login action
-			await History.logAction({
-				userId: user.id,
-				relatedId: null,
-				relatedType: "auth",
-				actionType: "login",
-				details: "User logged in"
-			});
+			await History.logLogin(user.id);
+
+			await User.updateUser(user.id, { lastLogin: new Date() })
 
 			return res.status(200).json({
 				message: "Login successful",
 				token: token,
-				'refresh_token' : refreshToken,
+				refreshToken : refreshToken,
 				data: user
 			});
 		} catch (error) {
@@ -165,6 +167,8 @@ const AuthController = {
 				process.env.JWT_SECRET,
 				{ expiresIn: "1h" }
 			);
+			console.log('refresh réussie')
+
 			return res.status(200).json({ accessToken: newAccessToken });
 		} catch (err) {
 			console.error("Refresh token error:", err);
@@ -181,7 +185,8 @@ const AuthController = {
 			const decoded = jwt.verify(token, process.env.JWT_SECRET);
 			return res.status(200).json({ valid: true, data: decoded });
 		} catch (err) {
-			return res.status(401).json({ valid: false });
+			const isExpired = err.name === "TokenExpiredError";
+			return res.status(401).json({ valid: false, error: isExpired ? "Token expired" : "Invalid token"  });
 		}
 	}
 };

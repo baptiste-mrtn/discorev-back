@@ -5,19 +5,26 @@ import fs from "fs";
 // Configurez le stockage de Multer
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		let uploadPath;
+		const userId = req.user.id.toString();
+		const visibility = req.body.visibility || "public";
+		const mediaType = req.body.type || "other";
 
-		// Vérifie la visibilité du fichier
-		if (req.body.visibility === "private" || req.body.visibility === "shared") {
-			uploadPath = path.join("uploads", req.user.id.toString(), req.body.visibility);
-		} else {
-			uploadPath = path.join("uploads", "public");
-		}
+		const folders = {
+			profile_picture: "profile_pictures",
+			company_logo: "logos",
+			company_banner: "banners",
+			company_image: "images",
+			company_video: "videos",
+		};
 
-		// Crée le dossier si nécessaire
-		fs.mkdirSync(uploadPath, { recursive: true });
+		const folderName = folders[mediaType] || "others";
 
-		cb(null, uploadPath); // Définit le dossier de destination
+		const basePath = visibility === "private" || visibility === "shared"
+			? path.posix.join("uploads", userId, visibility, folderName)
+			: path.posix.join("uploads", "public", folderName);
+
+		fs.mkdirSync(basePath, { recursive: true });
+		cb(null, basePath);
 	},
 	filename: (req, file, cb) => {
 		const now = new Date();
@@ -41,9 +48,6 @@ const fileFilter = (req, file, cb) => {
 	const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
 	if (mimetype && extname) {
-		console.log(mimetype);
-		console.log(extname);
-
 		return cb(null, true);
 	} else {
 		cb(new Error("Only images and PDFs are allowed"));
