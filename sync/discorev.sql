@@ -64,6 +64,51 @@ CREATE TABLE document_permissions (
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE TABLE medias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uploader_id INT NOT NULL,
+    uploader_type ENUM('candidate', 'recruiter', 'admin', 'user') NOT NULL,
+    type ENUM(
+        'profile_picture',
+        'company_logo',
+        'company_banner',
+        'company_image',
+        'company_video',
+        'other'
+    ) NOT NULL,
+    context ENUM(
+        'user_profile',
+        'company_page',
+        'job_offer',
+        'article',
+        'other'
+    ) NOT NULL,
+    target_id INT NULL,
+    target_type ENUM(
+        'user',
+        'recruiter',
+        'candidate',
+        'job_offer',
+        'page',
+        'other'
+    ) NULL,
+    title VARCHAR(255) NULL,
+    file_path VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NULL,
+    thumbnail_path VARCHAR(255) NULL,
+    visibility ENUM('public', 'private', 'shared') DEFAULT 'public',
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uploader_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_medias_target ON medias(target_type, target_id);
+CREATE INDEX idx_medias_context ON medias(context);
+CREATE TABLE media_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    media_id INT NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (media_id) REFERENCES medias(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 CREATE TABLE job_offers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     recruiter_id INT NOT NULL,

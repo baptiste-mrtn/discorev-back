@@ -1,15 +1,16 @@
-import db from '../config/db.js';
+import dbHelpers from '../helpers/dbHelpers.js';
 
 const Message = {
     async sendMessage(conversationId, senderId, content) {
-        const [result] = await db.execute(
-            'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)',
-            [conversationId, senderId, content]
-        );
-        return result.insertId;
+        return await dbHelpers.dbInsert('messages', {
+            conversationId,
+            senderId,
+            content
+        });
     },
 
     async getMessagesByConversationId(conversationId) {
+        // Requête complexe, on garde le SQL direct
         const [rows] = await db.execute(
             `SELECT m.*, u.name AS sender_name
              FROM messages m
@@ -22,6 +23,7 @@ const Message = {
     },
 
     async markAsRead(conversationId, userId) {
+        // Requête complexe, on garde le SQL direct
         await db.execute(
             `UPDATE messages 
              SET is_read = TRUE 

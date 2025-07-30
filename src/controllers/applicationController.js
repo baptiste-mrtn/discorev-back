@@ -1,6 +1,5 @@
 import Application from "../models/applicationModel.js";
 import User from "../models/userModel.js";
-import conversion from "../utils/conversion.js";
 
 const ApplicationController = {
 	async applyToJob(req, res) {
@@ -14,7 +13,6 @@ const ApplicationController = {
 		try {
 			// Vérifiez que l'utilisateur est bien un candidate
 			const user = await User.getUserById(userId);
-			const userCamel = await conversion.snakeToCamel(user);
 			if (!user || userCamel.accountType !== "candidate") {
 				return res.status(403).json({ message: "Only candidates can apply to job offers" });
 			}

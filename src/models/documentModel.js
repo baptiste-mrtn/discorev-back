@@ -1,5 +1,4 @@
-import db from "../config/db.js";
-import conversion from "../utils/conversion.js";
+import dbHelpers from "../helpers/dbHelpers.js";
 
 const Document = {
 	/**
@@ -9,18 +8,7 @@ const Document = {
 	 */
 	async createDocument(documentData) {
 		try {
-			const documentDataSnakeCase = await conversion.camelToSnake(documentData);
-			const columns = Object.keys(documentDataSnakeCase).join(", ");
-			const placeholders = Object.keys(documentDataSnakeCase)
-				.map(() => "?")
-				.join(", ");
-			const values = Object.values(documentDataSnakeCase);
-
-			const [result] = await db.execute(
-				`INSERT INTO documents (${columns}) VALUES (${placeholders})`,
-				values
-			);
-			return result.insertId;
+			return await dbHelpers.dbInsert("documents", documentData);
 		} catch (error) {
 			console.error("Error creating document:", error);
 			throw error;
@@ -34,7 +22,7 @@ const Document = {
 	 */
 	async getDocumentsById(id) {
 		try {
-			const [rows] = await db.execute("SELECT * FROM documents WHERE id = ?", [id]);
+			const rows = await dbHelpers.dbSelect("documents", { id });
 			return rows[0] || null;
 		} catch (error) {
 			console.error("Error fetching document by ID:", error);
@@ -49,9 +37,7 @@ const Document = {
 	 */
 	async getDocumentsBySenderId(senderId) {
 		try {
-			const [rows] = await db.execute("SELECT * FROM documents WHERE sender_id = ?", [
-				senderId
-			]);
+			const rows = await dbHelpers.dbSelect("documents", { senderId });
 			return rows;
 		} catch (error) {
 			console.error("Error fetching documents by sender ID:", error);
@@ -65,7 +51,7 @@ const Document = {
 	 */
 	async deleteDocumentById(documentId) {
 		try {
-			await db.execute("DELETE FROM documents WHERE id = ?", [documentId]);
+			await dbHelpers.dbDelete("documents", { id: documentId });
 		} catch (error) {
 			console.error("Error deleting document:", error);
 			throw error;
@@ -80,11 +66,7 @@ const Document = {
 	 */
 	async addPermission(documentId, receiverId) {
 		try {
-			const [result] = await db.execute(
-				"INSERT INTO document_permissions (document_id, receiver_id) VALUES (?, ?)",
-				[documentId, receiverId]
-			);
-			return result.insertId;
+			return await dbHelpers.dbInsert("document_permissions", { documentId, receiverId });
 		} catch (error) {
 			console.error("Error adding document permission:", error);
 			throw error;
@@ -98,11 +80,8 @@ const Document = {
 	 */
 	async getDocumentPermissions(documentId) {
 		try {
-			const [rows] = await db.execute(
-				"SELECT receiver_id FROM document_permissions WHERE document_id = ?",
-				[documentId]
-			);
-			return rows.map((row) => row.receiver_id);
+			const rows = await dbHelpers.dbSelect("document_permissions", { documentId });
+			return rows.map((row) => row.receiverId);
 		} catch (error) {
 			console.error("Error fetching shared users:", error);
 			throw error;
@@ -127,12 +106,8 @@ const Document = {
 			return false; // Refuser l'accès si un paramètre est invalide
 		}
 
-		const [rows] = await db.execute(
-			"SELECT * FROM document_permissions WHERE document_id = ?",
-			[documentId]
-		);
+		const rows = await dbHelpers.dbSelect("document_permissions", { documentId, receiverId: userId });
 		console.log("🔎 Résultat de la requête:", rows);
-
 		return rows.length > 0;
 	},
 
@@ -142,9 +117,7 @@ const Document = {
 	 */
 	async deleteDocumentPermissions(documentId) {
 		try {
-			await db.execute("DELETE FROM document_permissions WHERE document_id = ?", [
-				documentId
-			]);
+			await dbHelpers.dbDelete("document_permissions", { documentId });
 		} catch (error) {
 			console.error("Error deleting document permissions:", error);
 			throw error;
@@ -157,10 +130,7 @@ const Document = {
 	 * @param {Number} receiverId - ID du receveur
 	 */
 	async removePermission(documentId, receiverId) {
-		return db.execute(
-			"DELETE FROM document_permissions WHERE document_id = ? AND receiver_id = ?",
-			[documentId, receiverId]
-		);
+		return dbHelpers.dbDelete("document_permissions", { documentId, receiverId });
 	},
 
 	/**
@@ -172,32 +142,19 @@ const Document = {
 		try {
 			// 🔴 Suppression des utilisateurs
 			if (removeUsers && removeUsers.length > 0) {
-				await db.execute(
-					`DELETE FROM document_permissions WHERE document_id = ? AND receiver_id IN (${removeUsers
-						.map(() => "?")
-						.join(",")})`,
-					[documentId, ...removeUsers]
-				);
+				for (const receiverId of removeUsers) {
+					await dbHelpers.dbDelete("document_permissions", { documentId, receiverId });
+				}
 			}
 
 			// 🟢 Ajout des nouveaux utilisateurs
 			if (addUsers && addUsers.length > 0) {
-				// Vérifier quels utilisateurs ne sont pas déjà autorisés
-				const [existingPermissions] = await db.execute(
-					`SELECT receiver_id FROM document_permissions WHERE document_id = ? AND receiver_id IN (${addUsers
-						.map(() => "?")
-						.join(",")})`,
-					[documentId, ...addUsers]
-				);
-
-				const existingUserIds = existingPermissions.map((row) => row.receiver_id);
-				const usersToAdd = addUsers.filter((id) => !existingUserIds.includes(id));
-
-				if (usersToAdd.length > 0) {
-					const values = usersToAdd.map((id) => `(${documentId}, ${id})`).join(",");
-					await db.execute(
-						`INSERT INTO document_permissions (document_id, receiver_id) VALUES ${values}`
-					);
+				for (const receiverId of addUsers) {
+					// Vérifier si la permission existe déjà
+					const existing = await dbHelpers.dbSelect("document_permissions", { documentId, receiverId });
+					if (existing.length === 0) {
+						await dbHelpers.dbInsert("document_permissions", { documentId, receiverId });
+					}
 				}
 			}
 		} catch (error) {
@@ -212,7 +169,7 @@ const Document = {
 	 */
 	async getAllDocuments() {
 		try {
-			const [rows] = await db.execute("SELECT * FROM documents");
+			const rows = await dbHelpers.dbSelect("documents");
 			return rows;
 		} catch (error) {
 			console.error("Error fetching all documents:", error);
