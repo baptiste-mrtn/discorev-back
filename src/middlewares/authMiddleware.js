@@ -23,7 +23,6 @@ const authenticateToken = async (req, res, next) => {
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
 		}
-		console.log(user)
 
 		delete user.password; // Supprime le mot de passe par sécurité
 		req.user = user;

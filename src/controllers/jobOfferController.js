@@ -3,10 +3,12 @@ import Application from "../models/applicationModel.js";
 import History from "../models/historyModel.js";
 import User from "../models/userModel.js";
 import Recruiter from "../models/recruiterModel.js";
+import camelcaseKeys from "camelcase-keys";
 
 const JobOfferController = {
 	async createJobOffer(req, res) {
-		
+		req.body = await camelcaseKeys(req.body);
+
 		const {
 			recruiterId,
 			title,
@@ -19,7 +21,7 @@ const JobOfferController = {
 			expirationDate,
 			status
 		} = req.body;
-		
+
 		if (!recruiterId || !title || !employmentType) {
 			return res.status(400).json({ message: "Required fields are missing" });
 		}
@@ -42,7 +44,7 @@ const JobOfferController = {
 				remote: !!remote,
 				status
 			};
-			
+
 			const jobOfferId = await JobOffer.createJobOffer(jobOfferData);
 			const recruiter = await Recruiter.getRecruiterById(recruiterId);
 			const userId = recruiter.userId;
@@ -117,9 +119,11 @@ const JobOfferController = {
 
 		try {
 			const jobOffer = await JobOffer.getJobOfferById(jobOfferId);
-			const recruiter = await Recruiter.getRecruiterById(jobOffer['recruiterId']);
+			const recruiter = await Recruiter.getRecruiterById(jobOffer["recruiterId"]);
 			return jobOffer
-				? res.status(200).json({message: 'Job offer found', data: {jobOffer, recruiter}})
+				? res
+						.status(200)
+						.json({ message: "Job offer found", data: { jobOffer, recruiter } })
 				: res.status(404).json({ message: "Job offer not found" });
 		} catch (error) {
 			console.error(error);

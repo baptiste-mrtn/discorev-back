@@ -15,7 +15,6 @@ export const attachMedias = async (data, targetType) => {
 	}
 
 	// Sinon, objet unique
-	console.log(data);
 	let medias = await Media.getByTarget(targetType, data.id);
 
 	// Fallback si user n'a pas de média : on va voir si c'est un recruiter

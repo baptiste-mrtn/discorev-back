@@ -8,6 +8,7 @@ import path from "path";
 // Import des routes
 import authRoutes from "./src/routes/authRoutes.js";
 import documentRoutes from "./src/routes/documentRoutes.js";
+import mediaRoutes from "./src/routes/mediaRoutes.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
 import messageRoutes from "./src/routes/messageRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
@@ -46,6 +47,7 @@ app.use("/uploads", express.static(path.resolve("uploads")));
 // **Routes**
 app.use("/auth", authRoutes);
 app.use("/documents", documentRoutes);
+app.use("/medias", mediaRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/messages", messageRoutes);
 app.use("/notifications", notificationRoutes);
