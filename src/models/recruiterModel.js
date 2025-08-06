@@ -1,5 +1,6 @@
 import dbHelpers from "../helpers/dbHelpers.js";
 import { withMedias } from "../helpers/withMedias.js";
+import { withTeamMembers } from "../helpers/withTeamMembers.js";
 
 const baseRecruiter = {
 	async getAllRecruiters() {
@@ -35,11 +36,19 @@ const baseRecruiter = {
 	}
 };
 
-const Recruiter = withMedias(baseRecruiter, "recruiter", [
+// Étape 1 : enrichir avec les membres
+const recruiterWithTeam = withTeamMembers(baseRecruiter, [
 	"getAllRecruiters",
 	"getRecruiterByUserId",
 	"getRecruiterById",
 	"getRecruiterByCompanyName"
 ]);
 
+// Étape 2 : enrichir avec les médias (si besoin)
+const Recruiter = withMedias(recruiterWithTeam, "recruiter", [
+	"getAllRecruiters",
+	"getRecruiterByUserId",
+	"getRecruiterById",
+	"getRecruiterByCompanyName"
+]);
 export default Recruiter;

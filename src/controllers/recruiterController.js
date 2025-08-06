@@ -7,7 +7,7 @@ const RecruiterController = {
 	async getAllRecruiters(req, res) {
 		try {
 			const recruiters = await Recruiter.getAllRecruiters();
-			return res.status(200).json({data: recruiters, message: 'Recruiters founded'});
+			return res.status(200).json({ data: recruiters, message: "Recruiters founded" });
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
@@ -16,22 +16,39 @@ const RecruiterController = {
 
 	// Get recruiter by ID
 	async getRecruiterById(req, res) {
-		const userId = req.params.id;
+		const recruiterId = req.params.id;
 
 		try {
-			const recruiter = await Recruiter.getRecruiterById(userId);
+			const recruiter = await Recruiter.getRecruiterById(recruiterId);
 			if (!recruiter) {
 				return res.status(404).json({ message: "Recruiter not found" });
 			}
 
-			return res.status(200).json({data: recruiter, message: 'Recruiter founded'});
+			return res.status(200).json({ data: recruiter, message: "Recruiter founded" });
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
 		}
 	},
 
-    // Get recruiter by company name
+	// Get recruiter by ID
+	async getRecruiterByUserId(req, res) {
+		const userId = req.params.id;
+
+		try {
+			const recruiter = await Recruiter.getRecruiterByUserId(userId);
+			if (!recruiter) {
+				return res.status(404).json({ message: "Recruiter not found" });
+			}
+
+			return res.status(200).json({ data: recruiter, message: "Recruiter founded" });
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({ message: "Internal server error" });
+		}
+	},
+
+	// Get recruiter by company name
 	async getRecruiterByCompanyName(req, res) {
 		const companyName = req.params.name;
 
@@ -41,7 +58,7 @@ const RecruiterController = {
 				return res.status(404).json({ message: "Recruiter not found" });
 			}
 
-			return res.status(200).json({data: recruiter, message: 'Recruiter founded'});
+			return res.status(200).json({ data: recruiter, message: "Recruiter founded" });
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
@@ -59,7 +76,7 @@ const RecruiterController = {
 				return res.status(404).json({ message: "Recruiter not found" });
 			}
 
-            console.log(updates)
+			console.log(updates);
 
 			await Recruiter.updateRecruiter(userId, updates);
 
@@ -106,7 +123,9 @@ const RecruiterController = {
 				details: `Recruiter ${userId} account deleted`
 			});
 
-			return res.status(200).json({ message: "Recruiter account and files deleted successfully" });
+			return res
+				.status(200)
+				.json({ message: "Recruiter account and files deleted successfully" });
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
