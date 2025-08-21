@@ -1,47 +1,33 @@
-import db from "../config/db.js";
-import conversion from "../utils/conversion.js";
+import dbHelpers from "../helpers/dbHelpers.js";
+import { withMedias } from "../helpers/withMedias.js";
 
-const Candidate = {
+const baseCandidate = {
 	async getAllCandidates() {
-		const [rows] = await db.execute("SELECT * FROM candidates");
+		const rows = await dbHelpers.dbSelect("candidates");
 		return rows;
 	},
 
 	async createCandidate(candidateData) {
-		const candidateDataSnakeCase = await conversion.camelToSnake(candidateData);
-
-		const columns = Object.keys(candidateDataSnakeCase).join(", ");
-		const placeholders = Object.keys(candidateDataSnakeCase)
-			.map(() => "?")
-			.join(", ");
-		const values = Object.values(candidateDataSnakeCase);
-
-		const [result] = await db.execute(
-			`INSERT INTO candidates (${columns}) VALUES (${placeholders})`,
-			values
-		);
-		return result.insertId;
+		return await dbHelpers.dbInsert("candidates", candidateData);
 	},
 
 	async getCandidateByUserId(userId) {
-		const [rows] = await db.execute("SELECT * FROM candidates WHERE user_id = ?", [userId]);
+		const rows = await dbHelpers.dbSelect("candidates", { userId });
 		return rows[0];
 	},
 
 	async updateCandidate(candidateId, updates) {
-		updates = await conversion.camelToSnake(updates);
-		const fields = Object.keys(updates)
-			.map((field) => `${field} = ?`)
-			.join(", ");
-		const values = Object.values(updates);
-		values.push(candidateId);
-
-		await db.execute(`UPDATE candidates SET ${fields} WHERE id = ?`, values);
+		await dbHelpers.dbUpdate("candidates", updates, { id: candidateId });
 	},
 
 	async deleteCandidate(candidateId) {
-		await db.execute("DELETE FROM candidates WHERE id = ?", [candidateId]);
+		await dbHelpers.dbDelete("candidates", { id: candidateId });
 	}
 };
 
+
+const Candidate = withMedias(baseCandidate, "candidate", [
+	"getAllCandidates",
+	"getCandidateByUserId"
+]);
 export default Candidate;

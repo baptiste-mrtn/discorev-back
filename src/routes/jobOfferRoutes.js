@@ -19,7 +19,10 @@ router.get("/filters", JobOfferController.getJobOffersWithFilters);
 router.get("/recruiter/:recruiterId", JobOfferController.getJobOffersByRecruiterId);
 
 //Récupération des détails d'une offre d'emploi
-router.get("/:jobOfferId", authenticateToken, JobOfferController.getJobOfferDetails);
+router.get("/:jobOfferId", JobOfferController.getJobOfferDetails);
+
+//Modification des détails d'une offre d'emploi
+router.put("/:jobOfferId", JobOfferController.updateJobOffer);
 
 //Suppression d'une offre d'emploi
 router.delete("/:jobOfferId", authenticateToken, JobOfferController.deleteJobOffer);

@@ -1,5 +1,4 @@
 import Document from "../models/documentModel.js";
-import conversion from "../utils/conversion.js";
 import path from "path";
 import fs from "fs/promises";
 
@@ -28,9 +27,6 @@ const DocumentPermissionsController = {
 			if (!document) {
 				return res.status(404).json({ message: "Document not found" });
 			}
-
-			const doc = await conversion.snakeToCamel(document);
-			console.log("🐍 Document après conversion:", doc);
 
 			if (!doc.senderId) {
 				console.error("❌ ERREUR: doc.senderId est undefined !");
@@ -118,7 +114,7 @@ const DocumentPermissionsController = {
 			}
 
 			// 2. Supprime le lien symbolique du côté du receiver
-			const sharedPath = path.join(
+			const sharedPath = path.posix.join(
 				"uploads",
 				String(receiverId),
 				"shared",

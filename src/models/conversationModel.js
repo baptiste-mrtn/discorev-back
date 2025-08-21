@@ -1,15 +1,15 @@
-import db from '../config/db.js';
+import dbHelpers from '../helpers/dbHelpers.js';
 
 const Conversation = {
     async createConversation(participant1Id, participant2Id) {
-        const [result] = await db.execute(
-            'INSERT INTO conversations (participant1_id, participant2_id) VALUES (?, ?)',
-            [participant1Id, participant2Id]
-        );
-        return result.insertId;
+        return await dbHelpers.dbInsert('conversations', {
+            participant1Id,
+            participant2Id
+        });
     },
 
     async getConversationsByUserId(userId) {
+        // Requête complexe, on garde le SQL direct
         const [rows] = await db.execute(
             `SELECT c.*, 
                     (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY sent_at DESC LIMIT 1) AS last_message,
@@ -23,6 +23,7 @@ const Conversation = {
     },
 
     async findConversation(participant1Id, participant2Id) {
+        // Requête complexe, on garde le SQL direct
         const [rows] = await db.execute(
             `SELECT * FROM conversations 
              WHERE (participant1_id = ? AND participant2_id = ?) 

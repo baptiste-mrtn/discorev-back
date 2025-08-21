@@ -1,5 +1,4 @@
 import Document from "../models/documentModel.js";
-import conversion from "../utils/conversion.js";
 import path from "path";
 import fs from "fs/promises";
 
@@ -58,13 +57,8 @@ const DocumentController = {
 		const documentId = req.params.documentId;
 		const user = req.user || null; // L'utilisateur peut être null si non connecté
 
-		console.log("User:", user); // Vérifie si l'utilisateur est bien récupéré
-		console.log("Document ID:", documentId); // Vérifie si l'ID du document est bien récupéré
-
 		try {
 			const doc = await Document.getDocumentsById(documentId);
-
-			console.log("Document:", doc); // Vérifie si le document est bien récupéré
 
 			if (!doc) {
 				return res.status(404).json({ message: "Document not found" });
@@ -140,7 +134,7 @@ const DocumentController = {
 			const deletedForUsers = [];
 
 			for (const user of sharedUsers) {
-				const sharedPath = path.join(
+				const sharedPath = path.posix.join(
 					"uploads",
 					String(user.receiver_id),
 					"shared",
@@ -170,7 +164,7 @@ const DocumentController = {
 	},
 
 	async deleteAllUserFiles(userId) {
-		const userPath = path.join(`uploads/${userId}`);
+		const userPath = path.posix.join(`uploads/${userId}`);
 
 		if (fs.existsSync(userPath)) {
 			fs.rmSync(userPath, { recursive: true, force: true }); // Supprime le dossier et tout son contenu
