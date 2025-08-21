@@ -1,30 +1,19 @@
 import express from "express";
+import authenticateToken from "../middlewares/authMiddleware.js";
 import JobOfferController from "../controllers/jobOfferController.js";
-import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-//Routes /job_offers
+// === CRUD générique hérité de BaseController ===
+router.get("/:id", JobOfferController.getOne);
+router.post("/", authenticateToken, JobOfferController.create);
+router.put("/:id", authenticateToken, JobOfferController.update);
+router.delete("/:id", authenticateToken, JobOfferController.delete);
 
-//Création d'une offre d'emploi
-router.post("/", authenticateToken, JobOfferController.createJobOffer);
-
-//Récupération de toute les offres d'emploi
-router.get("/", JobOfferController.getAllJobOffers);
-
-//Récupération des offres d'emploi avec filtres
-router.get("/filters", JobOfferController.getJobOffersWithFilters);
-
-//Récupération des offres d'emploi d'un recruteur
-router.get("/recruiter/:recruiterId", JobOfferController.getJobOffersByRecruiterId);
-
-//Récupération des détails d'une offre d'emploi
-router.get("/:jobOfferId", JobOfferController.getJobOfferDetails);
-
-//Modification des détails d'une offre d'emploi
-router.put("/:jobOfferId", JobOfferController.updateJobOffer);
-
-//Suppression d'une offre d'emploi
-router.delete("/:jobOfferId", authenticateToken, JobOfferController.deleteJobOffer);
+// === Routes custom ===
+router.get("/", JobOfferController.getAll); // toutes les offres actives enrichies
+router.get("/paginated", JobOfferController.getPaginated); // pagination + filtres
+router.get("/recruiter/:recruiterId", JobOfferController.getByRecruiter);
+router.get("/filters", JobOfferController.getWithFilters);
 
 export default router;

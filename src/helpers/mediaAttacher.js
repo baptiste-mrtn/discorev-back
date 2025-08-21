@@ -17,18 +17,29 @@ export const attachMedias = async (data, targetType) => {
 	// Sinon, objet unique
 	let medias = await Media.getByTarget(targetType, data.id);
 
-	// Fallback si user n'a pas de média : on va voir si c'est un recruiter
+	// Fallback si user n'a pas de média
 	if (targetType === "user" && medias.length === 0) {
-		const recruiter = await recruiterModel.getByUserId(data.id);
+		// imports dynamiques pour casser les cycles
+		const { default: Recruiter } = await import("../models/recruiterModel.js");
+		const { default: Candidate } = await import("../models/candidateModel.js");
+		const { default: Admin } = await import("../models/adminModel.js");
+
+		const recruiter = await Recruiter.getByUserId(data.id);
 		if (recruiter) {
 			medias = await Media.getByTarget("recruiter", recruiter.id);
 		} else {
-			const candidate = await candidateModel.getByUserId(data.id);
+			const candidate = await Candidate.getByUserId(data.id);
 			if (candidate) {
 				medias = await Media.getByTarget("candidate", candidate.id);
+			} else {
+				const admin = await Admin.getByUserId(data.id);
+				if (admin) {
+					medias = await Media.getByTarget("admin", admin.id);
+				}
 			}
 		}
 	}
+
 	return {
 		...data,
 		medias

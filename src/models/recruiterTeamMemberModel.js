@@ -1,35 +1,34 @@
-import dbHelpers from "../helpers/dbHelpers.js";
+import BaseModel from "./BaseModel.js";
 
-const RecruiterTeamMember = {
-	async createMember(data) {
-		console.log("data : ");
-		console.log(data);
-		return await dbHelpers.dbInsert("recruiter_team_members", data);
-	},
+class RecruiterTeamMember extends BaseModel {
+	constructor() {
+		super("recruiter_team_members");
+	}
 
 	async createMembersBulk(recruiterId, members) {
 		for (const { name, email, role } of members) {
 			if (!name || !email || !role) continue;
-			await dbHelpers.dbInsert("recruiter_team_members", {
+			await this.create({
 				recruiterId,
 				name,
 				email,
 				role
 			});
 		}
-	},
-
-	async updateMember(memberId, updates) {
-		return await dbHelpers.dbUpdate("recruiter_team_members", updates, { id: memberId });
-	},
-
-	async deleteMember(memberId) {
-		return await dbHelpers.dbDelete("recruiter_team_members", { id: memberId });
-	},
-
-	async getMembersByRecruiterId(recruiterId) {
-		return await dbHelpers.dbSelect("recruiter_team_members", { recruiterId });
 	}
-};
 
-export default RecruiterTeamMember;
+	async getGroupedTeamMembers(recruiterId) {
+		const rows = await this.findAll({ recruiterId });
+
+		// Regrouper par recruiterId
+		return rows.reduce((acc, member) => {
+			if (!acc[member.recruiterId]) {
+				acc[member.recruiterId] = [];
+			}
+			acc[member.recruiterId].push(member);
+			return acc;
+		}, {});
+	}
+}
+
+export default new RecruiterTeamMember();

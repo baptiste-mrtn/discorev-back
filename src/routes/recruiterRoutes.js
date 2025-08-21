@@ -1,25 +1,25 @@
 import express from "express";
+import authenticateToken from "../middlewares/authMiddleware.js";
 import RecruiterController from "../controllers/recruiterController.js";
 import RecruiterTeamMemberController from "../controllers/recruiterTeamMemberController.js";
-import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
-// Routes utilisateurs
-router.get("/", RecruiterController.getAllRecruiters);
-router.get("/:id", RecruiterController.getRecruiterById);
-router.get("/user/:id", RecruiterController.getRecruiterByUserId);
-router.put("/:id", authenticateToken, RecruiterController.updateRecruiter);
-router.delete("/:id", authenticateToken, RecruiterController.deleteRecruiter);
-router.get("/company/:name", RecruiterController.getRecruiterByCompanyName);
+
+// === CRUD générique hérité de BaseController ===
+router.get("/:id", RecruiterController.getOne);
+router.post("/", authenticateToken, RecruiterController.create);
+router.put("/:id", authenticateToken, RecruiterController.update);
+router.delete("/:id", authenticateToken, RecruiterController.delete);
+
+// === Routes custom ===
+router.get("/", RecruiterController.getAll);
+router.get("/company/:name", RecruiterController.getByCompanyName);
+router.get("/user/:id", RecruiterController.getByUserId);
 
 router.get("/:id/team", RecruiterTeamMemberController.getTeamMembers);
-router.post("/:id/team", authenticateToken, RecruiterTeamMemberController.addTeamMember);
+router.post("/:id/team", authenticateToken, RecruiterTeamMemberController.create);
 router.post("/:id/team/bulk", authenticateToken, RecruiterTeamMemberController.addTeamMembersBulk);
-router.put(
-	"/:id/team/:memberId",
-	authenticateToken,
-	RecruiterTeamMemberController.updateTeamMember
-);
-router.delete("/:id/team", authenticateToken, RecruiterTeamMemberController.deleteTeamMember);
+router.put("/:id/team/:memberId", authenticateToken, RecruiterTeamMemberController.update);
+router.delete("/:id/team", authenticateToken, RecruiterTeamMemberController.delete);
 
 export default router;
