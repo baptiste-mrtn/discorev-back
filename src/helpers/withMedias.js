@@ -7,14 +7,16 @@ import { attachMedias } from "./mediaAttacher.js";
  * @param {string[]} methodsToWrap - Méthodes à enrichir avec les médias
  */
 export const withMedias = (model, targetType, methodsToWrap = []) => {
-	const wrappedModel = { ...model };
+	// créer un objet qui hérite de model (prototype chain)
+	const wrappedModel = Object.create(model);
 
 	for (const methodName of methodsToWrap) {
 		const original = model[methodName];
 
 		if (typeof original === "function") {
+			// on bind pour conserver le this correct
 			wrappedModel[methodName] = async (...args) => {
-				const result = await original(...args);
+				const result = await original.apply(model, args);
 				return attachMedias(result, targetType);
 			};
 		}

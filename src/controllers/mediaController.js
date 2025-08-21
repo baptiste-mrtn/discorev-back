@@ -1,27 +1,18 @@
+import BaseController from "./baseController.js";
 import Media from "../models/mediaModel.js";
 import path from "path";
 import fs from "fs";
 
-const MediaController = {
-	async getMediaById(req, res) {
+class MediaController extends BaseController {
+	constructor() {
+		super(Media);
+	}
+
+	async delete(req, res) {
 		const mediaId = req.params.id;
 
 		try {
-			const media = await Media.getMediaById(mediaId);
-			if (!media) {
-				return res.status(404).json({ message: "Media not found." });
-			}
-			return res.status(200).json({ data: media, message: "Media found." });
-		} catch (error) {
-			return res.status(500).json({ message: "Internal server error." });
-		}
-	},
-
-	async deleteMedia(req, res) {
-		const mediaId = req.params.id;
-
-		try {
-			const media = await Media.getMediaById(mediaId);
+			const media = await Media.getById(mediaId);
 			if (!media) {
 				return res.status(404).json({ message: "Media not found." });
 			}
@@ -35,7 +26,7 @@ const MediaController = {
 			}
 
 			// Suppression de l'entrée en BDD
-			await Media.deleteMedia(mediaId);
+			await Media.delete(mediaId);
 
 			return res.status(200).json({ message: "Media deleted successfully." });
 		} catch (error) {
@@ -43,6 +34,6 @@ const MediaController = {
 			return res.status(500).json({ message: "internal server error." });
 		}
 	}
-};
+}
 
-export default MediaController;
+export default new MediaController();

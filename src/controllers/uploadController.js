@@ -76,7 +76,7 @@ export const uploadHandler = async (req, res, uploadType) => {
 			console.log(req.body);
 
 			// Contexts uniques à gérer (ajoute ce dont tu as besoin)
-			const uniqueContexts = ["company_logo", "profile_picture"];
+			const uniqueContexts = ["company_logo", "profile_picture", "company_banner"];
 
 			// Si c'est un contexte unique, supprimer l'ancien média avant insertion
 			if (uniqueContexts.includes(context)) {

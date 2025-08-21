@@ -1,11 +1,11 @@
 import express from "express";
 import ApplicationController from "../controllers/applicationController.js";
-import { authenticateToken } from "../middlewares/authMiddleware.js";
+import authenticateToken from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 // Postuler à une offre d'emploi
-router.post("/apply", authenticateToken, ApplicationController.applyToJob);
+router.post("/apply", authenticateToken, ApplicationController.create);
 
 // Récupérer les candidatures d'un candidat
 router.get(
@@ -21,10 +21,14 @@ router.get(
 	ApplicationController.getApplicationsByJobOffer
 );
 
-// // Mettre à jour le statut d'une candidature
-// router.patch('/:applicationId/status', authenticateToken, ApplicationController.updateApplicationStatus);
+// Mettre à jour le statut d'une candidature
+router.patch(
+	"/:applicationId/status",
+	authenticateToken,
+	ApplicationController.updateApplicationStatus
+);
 
-// // Supprimer une candidature
-// router.delete('/:applicationId', authenticateToken, ApplicationController.deleteApplication);
+// Supprimer une candidature
+router.delete("/:applicationId", authenticateToken, ApplicationController.delete);
 
 export default router;
