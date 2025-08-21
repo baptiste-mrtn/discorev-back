@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
+import fs from "fs";
 
 // Import des routes
 import authRoutes from "./src/routes/authRoutes.js";
@@ -13,12 +14,19 @@ import uploadRoutes from "./src/routes/uploadRoutes.js";
 import messageRoutes from "./src/routes/messageRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
 import jobOfferRoutes from "./src/routes/jobOfferRoutes.js";
-import userRoutes from "./src/routes/userRoutes.js";
 import recruiterRoutes from "./src/routes/recruiterRoutes.js";
 import applicationRoutes from "./src/routes/applicationRoutes.js";
 import historyRoutes from "./src/routes/historyRoutes.js";
+
+import crudRoutes from "./src/routes/crudRoutes.js";
+import BaseController from "./src/controllers/baseController.js";
+import BaseModel from "./src/models/BaseModel.js";
+
+import errorHandler from "./src/middlewares/errorHandler.js";
 import sanitizeRequest from "./src/middlewares/sanitizerMiddleware.js";
 import caseConverter from "./src/middlewares/caseConverter.js";
+import authenticateToken from "./src/middlewares/authMiddleware.js";
+import isAdmin from "./src/middlewares/isAdmin.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -37,12 +45,117 @@ app.use(
 	})
 );
 
+const allowedOrigins = ["http://localhost:8000", "http://127.0.0.1:8000"];
+
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			// Autorise les appels Postman (sans origine) + localhost/127.0.0.1
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+			} else {
+				callback(new Error("Not allowed by CORS: " + origin));
+			}
+		},
+		credentials: true
+	})
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(sanitizeRequest);
 app.use(caseConverter);
+
 app.use("/uploads", express.static(path.resolve("uploads")));
+
+// Tables simples (CRUD générique)
+const GENERIC_TABLES = [
+	{
+		name: "admins",
+		middlewares: {
+			getAll: [authenticateToken, isAdmin],
+			getOne: [authenticateToken, isAdmin],
+			getOneByUserId: [authenticateToken, isAdmin],
+			create: [authenticateToken, isAdmin],
+			update: [authenticateToken, isAdmin],
+			delete: [authenticateToken, isAdmin]
+		}
+	},
+	{
+		name: "websites",
+		middlewares: {
+			getAll: [],
+			getOne: [],
+			getOneByUserId: [authenticateToken],
+			create: [authenticateToken],
+			update: [authenticateToken],
+			delete: [authenticateToken]
+		}
+	},
+	{
+		name: "website_sections",
+		middlewares: {
+			getAll: [],
+			getOne: [],
+			getOneByUserId: [authenticateToken],
+			create: [authenticateToken],
+			update: [authenticateToken],
+			delete: [authenticateToken]
+		}
+	},
+	{
+		name: "plans",
+		middlewares: {
+			getAll: [], // public
+			getOne: [], // public
+			getOneByUserId: [authenticateToken],
+			create: [authenticateToken, isAdmin], // réservé
+			update: [authenticateToken, isAdmin],
+			delete: [authenticateToken, isAdmin]
+		}
+	},
+	{
+		name: "subscriptions",
+		middlewares: {
+			getAll: [authenticateToken],
+			getOne: [authenticateToken],
+			getOneByUserId: [authenticateToken],
+			create: [authenticateToken],
+			update: [authenticateToken],
+			delete: [authenticateToken]
+		}
+	}
+];
+GENERIC_TABLES.forEach(async ({ name, middlewares }) => {
+	// Chemins potentiels
+	const modelPath = path.resolve(`./models/${name}Model.js`);
+	const controllerPath = path.resolve(`./controllers/${name}Controller.js`);
+
+	// Charger le modèle
+	let model;
+	if (fs.existsSync(modelPath)) {
+		const customModel = await import(modelPath);
+		model = customModel.default || customModel; // compat export default
+		console.log(`Custom model loaded for ${name}`);
+	} else {
+		model = new BaseModel(name);
+	}
+
+	// Charger le contrôleur
+	let controller;
+	if (fs.existsSync(controllerPath)) {
+		const customController = await import(controllerPath);
+		controller = customController.default || customController;
+		console.log(`Custom controller loaded for ${name}`);
+	} else {
+		controller = new BaseController(model);
+	}
+
+	// Initialiser les routes
+	console.log(`Routes for ${name} initialized`);
+	app.use(`/${name}`, crudRoutes(controller, middlewares));
+});
 
 // **Routes**
 app.use("/auth", authRoutes);
@@ -52,10 +165,11 @@ app.use("/upload", uploadRoutes);
 app.use("/messages", messageRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/job_offers", jobOfferRoutes);
-app.use("/users", userRoutes);
 app.use("/recruiters", recruiterRoutes);
 app.use("/applications", applicationRoutes);
 app.use("/histories", historyRoutes);
+
+app.use(errorHandler);
 
 // **Gestion des connexions Socket.IO**
 io.on("connection", (socket) => {
@@ -79,6 +193,7 @@ app.get("/", (req, res) => {
 
 // **Erreur 404**
 app.use((req, res) => {
+	console.log(`404 Not Found: ${req.originalUrl}`);
 	res.status(404).json({ message: "Route not found" });
 });
 

@@ -1,7 +1,7 @@
 import express from "express";
 import DocumentController from "../controllers/documentController.js";
 import DocumentPermissionsController from "../controllers/documentPermissionsController.js";
-import { authenticateToken, authenticateTokenOptional } from "../middlewares/authMiddleware.js";
+import authenticateToken from "../middlewares/authMiddleware.js";
 import { configurationStorage } from "../middlewares/storageMiddleware.js";
 
 const multer = configurationStorage();
@@ -13,22 +13,14 @@ router.post(
 	multer.single("file_path"),
 	DocumentController.uploadDocument
 );
-router.get("/download/:documentId", authenticateTokenOptional, DocumentController.downloadDocument);
+router.get("/download/:documentId", authenticateToken, DocumentController.downloadDocument);
 router.get("/user/:senderId", authenticateToken, DocumentController.getUserDocuments);
 router.delete("/:documentId", authenticateToken, DocumentController.deleteDocument);
 
 //Permissions
-router.put("/share", authenticateToken, DocumentPermissionsController.shareDocument);
-router.get(
-	"/:documentId/permissions",
-	authenticateToken,
-	DocumentPermissionsController.getDocumentPermissions
-);
-router.put(
-	"/:documentId/permissions",
-	authenticateToken,
-	DocumentPermissionsController.updateDocumentPermissions
-);
+router.put("/share", authenticateToken, DocumentPermissionsController.create);
+router.get("/:documentId/permissions", authenticateToken, DocumentPermissionsController.getAll);
+router.put("/:documentId/permissions", authenticateToken, DocumentPermissionsController.update);
 router.delete(
 	"/:documentId/permissions",
 	authenticateToken,

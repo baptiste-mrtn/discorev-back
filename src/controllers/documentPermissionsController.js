@@ -1,9 +1,15 @@
+import BaseController from "./baseController.js";
 import Document from "../models/documentModel.js";
+import DocumentPermission from "../models/documentPermissionModel.js";
 import path from "path";
 import fs from "fs/promises";
 
-const DocumentPermissionsController = {
-	async shareDocument(req, res) {
+class DocumentPermissionsController extends BaseController {
+	constructor() {
+		super(DocumentPermission);
+	}
+
+	create = async (req, res) => {
 		const { documentId, receiverId } = req.body;
 		const userId = req.user.id; // Vérifie que req.user est bien défini
 
@@ -21,7 +27,7 @@ const DocumentPermissionsController = {
 		}
 
 		try {
-			const document = await Document.getDocumentsById(documentId);
+			const document = await Document.getById(documentId);
 			console.log("📄 Document récupéré:", document);
 
 			if (!document) {
@@ -41,27 +47,15 @@ const DocumentPermissionsController = {
 				return res.status(401).json({ message: "This document is not shareable" });
 			}
 
-			const data = await Document.addPermission(documentId, receiverId);
-			return res.status(200).json({ message: "Document has been shared successfully" });
+			const data = await DocumentPermission.create(documentId, receiverId);
+			return res.status(200).json({ data, message: "Document has been shared successfully" });
 		} catch (error) {
 			console.error("❌ ERREUR GLOBALE:", error);
 			return res.status(500).json({ message: "Internal server error", error });
 		}
-	},
+	};
 
-	async getDocumentPermissions(req, res) {
-		const documentId = req.params.documentId;
-
-		try {
-			const permissions = await Document.getDocumentPermissions(documentId);
-			return res.status(200).json(permissions);
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	},
-
-	async updateDocumentPermissions(req, res) {
+	update = async (req, res) => {
 		const { documentId, addUsers, removeUsers } = req.body;
 		const userId = req.user.userId;
 
@@ -71,7 +65,7 @@ const DocumentPermissionsController = {
 
 		try {
 			// Récupérer le document
-			const document = await Document.getDocumentsById(documentId);
+			const document = await Document.getById(documentId);
 			if (!document) {
 				return res.status(404).json({ message: "Document not found" });
 			}
@@ -81,16 +75,16 @@ const DocumentPermissionsController = {
 				return res.status(403).json({ message: "Unauthorized" });
 			}
 
-			await Document.updateDocumentPermissions(documentId, addUsers, removeUsers);
+			await DocumentPermission.update(documentId, addUsers, removeUsers);
 
 			return res.status(200).json({ message: "Permissions updated successfully" });
 		} catch (error) {
 			console.error("Error updating permissions:", error);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async revokeUserPermission(req, res) {
+	revokeUserPermission = async (req, res) => {
 		const { documentId, receiverId } = req.body;
 		const requesterId = req.user.userId;
 
@@ -100,7 +94,7 @@ const DocumentPermissionsController = {
 
 		try {
 			// 1. Vérifie si le document existe et appartient bien au demandeur
-			const document = await Document.getDocumentsById(documentId);
+			const document = await Document.getById(documentId);
 			if (!document || document.length === 0) {
 				return res.status(404).json({ message: "Document not found" });
 			}
@@ -126,7 +120,7 @@ const DocumentPermissionsController = {
 			}
 
 			// 3. Supprime la permission en base de données
-			await Document.removePermission(documentId, receiverId);
+			await DocumentPermission.removePermission(documentId, receiverId);
 
 			return res.status(200).json({
 				message: `Access revoked for user ${receiverId}`
@@ -135,7 +129,7 @@ const DocumentPermissionsController = {
 			console.error("Error revoking permission:", err);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	}
-};
+	};
+}
 
-export default DocumentPermissionsController;
+export default new DocumentPermissionsController();

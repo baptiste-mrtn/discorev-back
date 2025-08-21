@@ -1,9 +1,15 @@
+import BaseController from "./baseController.js";
 import Document from "../models/documentModel.js";
+import DocumentPermission from "../models/documentPermissionModel.js";
 import path from "path";
 import fs from "fs/promises";
 
-const DocumentController = {
-	async uploadDocument(req, res) {
+class DocumentController extends BaseController {
+	constructor() {
+		super(Document);
+	}
+
+	uploadDocument = async (req, res) => {
 		const { title, type, visibility, receiverId } = req.body;
 		const user = req.user;
 		const senderId = user.id;
@@ -27,7 +33,7 @@ const DocumentController = {
 		}
 
 		try {
-			const documentId = await Document.createDocument({
+			const documentId = await Document.create({
 				senderId,
 				senderType,
 				title,
@@ -37,7 +43,7 @@ const DocumentController = {
 			});
 
 			if (visibility === "shared" && receiverId) {
-				await Document.addPermission({
+				await DocumentPermission.create({
 					documentId,
 					receiverId
 				});
@@ -51,14 +57,14 @@ const DocumentController = {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async downloadDocument(req, res) {
+	downloadDocument = async (req, res) => {
 		const documentId = req.params.documentId;
 		const user = req.user || null; // L'utilisateur peut être null si non connecté
 
 		try {
-			const doc = await Document.getDocumentsById(documentId);
+			const doc = await Document.getById(documentId);
 
 			if (!doc) {
 				return res.status(404).json({ message: "Document not found" });
@@ -67,7 +73,7 @@ const DocumentController = {
 			// Vérification des permissions
 			const isOwner = user && doc.sender_id === user.userId;
 			const isSharedWithUser =
-				user && (await Document.isUserAuthorized(documentId, user.userId));
+				user && (await DocumentPermission.isUserAuthorized(documentId, user.userId));
 			const isPublic = doc.visibility === "public";
 
 			if (
@@ -96,21 +102,21 @@ const DocumentController = {
 			console.error("Error in downloadDocument:", error);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async getUserDocuments(req, res) {
+	getUserDocuments = async (req, res) => {
 		const senderId = req.params.senderId;
 
 		try {
-			const documents = await Document.getDocumentsBySenderId(senderId);
-			return res.status(200).json(documents);
+			const documents = await Document.getBySenderId(senderId);
+			return res.status(200).json({ data: documents });
 		} catch (error) {
 			console.error(error);
 			return res.status(500).json({ message: "Internal server error", data: error });
 		}
-	},
+	};
 
-	async deleteDocument(req, res) {
+	deleteDocument = async (req, res) => {
 		const { documentId } = req.body;
 		const userId = req.user.id;
 
@@ -119,7 +125,7 @@ const DocumentController = {
 		}
 
 		try {
-			const document = await Document.getDocumentsById(documentId);
+			const document = await Document.getById(documentId);
 			if (!document) {
 				return res.status(404).json({ message: "Document not found" });
 			}
@@ -130,7 +136,7 @@ const DocumentController = {
 				return res.status(403).json({ message: "Unauthorized" });
 			}
 
-			const sharedUsers = await Document.getSharedUsersByDocumentId(documentId);
+			const sharedUsers = await DocumentPermission.getAll(documentId);
 			const deletedForUsers = [];
 
 			for (const user of sharedUsers) {
@@ -151,7 +157,7 @@ const DocumentController = {
 				fs.unlinkSync(filePath);
 			}
 
-			await Document.deleteDocumentPermissions(documentId);
+			await DocumentPermission.delete(documentId);
 
 			return res.status(200).json({
 				message: "Document and symbolic links deleted successfully",
@@ -161,45 +167,15 @@ const DocumentController = {
 			console.error("Error deleting document:", err);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async deleteAllUserFiles(userId) {
+	deleteAllUserFiles = async (userId) => {
 		const userPath = path.posix.join(`uploads/${userId}`);
 
 		if (fs.existsSync(userPath)) {
 			fs.rmSync(userPath, { recursive: true, force: true }); // Supprime le dossier et tout son contenu
 		}
-	},
+	};
+}
 
-	// Permissions
-
-	async addDocumentPermission(req, res) {
-		const { documentId, receiverId } = req.body;
-
-		if (!documentId || !receiverId) {
-			return res.status(400).json({ message: "Document ID and Receiver ID are required" });
-		}
-
-		try {
-			const permissionId = await Document.addPermission({ documentId, receiverId });
-			return res.status(201).json({ message: "Permission added successfully", permissionId });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	},
-
-	async getDocumentPermissions(req, res) {
-		const documentId = req.params.documentId;
-
-		try {
-			const permissions = await Document.getDocumentPermissions(documentId);
-			return res.status(200).json(permissions);
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	}
-};
-
-export default DocumentController;
+export default new DocumentController();

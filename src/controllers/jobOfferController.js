@@ -1,160 +1,86 @@
+import BaseController from "./baseController.js";
 import JobOffer from "../models/jobOfferModel.js";
-import Application from "../models/applicationModel.js";
-import History from "../models/historyModel.js";
-import User from "../models/userModel.js";
 import Recruiter from "../models/recruiterModel.js";
-import camelcaseKeys from "camelcase-keys";
 
-const JobOfferController = {
-	async createJobOffer(req, res) {
-		req.body = await camelcaseKeys(req.body);
+class JobOfferController extends BaseController {
+	constructor() {
+		super(JobOffer); // CRUD générique
+	}
 
-		const {
-			recruiterId,
-			title,
-			description,
-			requirements,
-			salaryRange,
-			employmentType,
-			location,
-			remote,
-			expirationDate,
-			status
-		} = req.body;
-
-		if (!recruiterId || !title || !employmentType) {
-			return res.status(400).json({ message: "Required fields are missing" });
-		}
-
-		if (expirationDate && expirationDate.trim() !== "") {
-			if (new Date(expirationDate) < new Date()) {
-				return res.status(400).json({ message: "Expiration date must be in the future" });
-			}
-		}
-
+	// === Récupérer toutes les offres actives enrichies avec recruteur ===
+	getAll = async (req, res) => {
 		try {
-			const jobOfferData = {
-				recruiterId,
-				title,
-				description,
-				requirements,
-				salaryRange,
-				employmentType,
-				location,
-				remote: !!remote,
-				status
-			};
+			const offers = await this.model.getAll(
+				{}, // pas de filtre spécifique
+				{ activeOnly: true, orderBy: "publication_date", orderDir: "DESC" }
+			);
 
-			const jobOfferId = await JobOffer.createJobOffer(jobOfferData);
-			const recruiter = await Recruiter.getRecruiterById(recruiterId);
-			const userId = recruiter.userId;
-
-			await History.logAction({
-				userId,
-				relatedId: jobOfferId,
-				relatedType: "job_offer",
-				actionType: "create",
-				details: "Job offer created by recruiter " + recruiterId + " with ID " + jobOfferId
-			});
-
-			return res.status(201).json({ message: "Job offer created successfully", jobOfferId });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	},
-
-	async getAllJobOffers(req, res) {
-		try {
-			const jobOffers = await JobOffer.getAllJobOffers();
-
-			const enrichedOffers = await Promise.all(
-				jobOffers.map(async (offer) => {
-					const company = await Recruiter.getRecruiterById(offer["recruiterId"]);
-					return {
-						...offer,
-						company
-					};
+			const enriched = await Promise.all(
+				offers.map(async (offer) => {
+					const recruiter = await Recruiter.getBy(offer.recruiterId);
+					return { ...offer, recruiter };
 				})
 			);
 
-			return res.status(200).json({
-				data: enrichedOffers,
-				message: "Job offers retrieved successfully"
+			res.status(200).json({ message: "Active job offers", data: enriched });
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ message: "Internal server error" });
+		}
+	};
+
+	// === Pagination avec filtres et enrichissement ===
+	getPaginated = async (req, res) => {
+		try {
+			const page = parseInt(req.query.page) || 1;
+			const limit = parseInt(req.query.limit) || 10;
+			const filters = req.query.filters ? JSON.parse(req.query.filters) : {};
+
+			const offers = await this.model.getAll(filters, {
+				activeOnly: true,
+				page,
+				limit,
+				orderBy: "created_at",
+				orderDir: "DESC"
 			});
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
+
+			const enriched = await Promise.all(
+				offers.map(async (offer) => {
+					const recruiter = await Recruiter.getById(offer.recruiterId);
+					return { ...offer, recruiter };
+				})
+			);
+
+			res.status(200).json({ page, limit, data: enriched, message: "Paginated job offers" });
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async getJobOffersWithFilters(req, res) {
-		const filters = req.query;
-
+	// === Offres par recruteur ===
+	getByRecruiter = async (req, res) => {
 		try {
-			const jobOffers = await JobOffer.getJobOffersWithFilters(filters);
-			return res.status(200).json({ data: jobOffers });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
+			const recruiterId = req.params.recruiterId;
+			const offers = await this.model.getAll({ recruiterId }, { activeOnly: true });
+			res.status(200).json({ message: "Job offers by recruiter", data: offers });
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
 
-	async getJobOffersByRecruiterId(req, res) {
-		const recruiterId = req.params.recruiterId;
-
+	// === Filtres simples ===
+	getWithFilters = async (req, res) => {
 		try {
-			const jobOffers = await JobOffer.getJobOffersByRecruiterId(recruiterId);
-			return res
-				.status(200)
-				.json({ data: jobOffers, message: "Job offers retrieved successfully" });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
+			const filters = req.query || {};
+			const offers = await this.model.getAll(filters, { activeOnly: true });
+			res.status(200).json({ message: "Filtered job offers", data: offers });
+		} catch (err) {
+			console.error(err);
+			res.status(500).json({ message: "Internal server error" });
 		}
-	},
+	};
+}
 
-	async getJobOfferDetails(req, res) {
-		const jobOfferId = req.params.jobOfferId;
-
-		try {
-			const jobOffer = await JobOffer.getJobOfferById(jobOfferId);
-			const recruiter = await Recruiter.getRecruiterById(jobOffer["recruiterId"]);
-			return jobOffer
-				? res
-						.status(200)
-						.json({ message: "Job offer found", data: { jobOffer, recruiter } })
-				: res.status(404).json({ message: "Job offer not found" });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	},
-
-	async updateJobOffer(req, res) {
-		const jobOfferId = req.params.jobOfferId;
-		const updates = req.body;
-
-		try {
-			await JobOffer.updateJobOffer(jobOfferId, updates);
-			return res.status(200).json({ message: "Job offer updated successfully" });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	},
-
-	async deleteJobOffer(req, res) {
-		const jobOfferId = req.params.jobOfferId;
-
-		try {
-			await JobOffer.deleteJobOffer(jobOfferId);
-			return res.status(200).json({ message: "Job offer deleted successfully" });
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Internal server error" });
-		}
-	}
-};
-
-export default JobOfferController;
+export default new JobOfferController();

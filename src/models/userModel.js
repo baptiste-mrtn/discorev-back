@@ -1,36 +1,23 @@
 import dbHelpers from "../helpers/dbHelpers.js";
-import bcrypt from "bcrypt";
+import BaseModel from "./BaseModel.js";
 import { withMedias } from "../helpers/withMedias.js";
 
-const baseUser = {
-	async getAllUsers() {
-		const rows = await dbHelpers.dbSelect("users");
-		return rows;
-	},
+class User extends BaseModel {
+	constructor() {
+		super("users"); // table
+	}
 
-	async createUser(userData) {
-		const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-		// Ajouter le hashedPassword dans userData
-		const userDataWithHashedPassword = {
-			...userData,
-			password: hashedPassword
-		};
-
-		return await dbHelpers.dbInsert("users", userDataWithHashedPassword);
-	},
-
-	async getUserByEmail(email) {
+	async getByEmail(email) {
 		const rows = await dbHelpers.dbSelect("users", { email });
 		return rows[0];
-	},
+	}
 
 	async getUserBy(field, value) {
 		const rows = await dbHelpers.dbSelect("users", { [field]: value });
 		return rows[0];
-	},
+	}
 
-	async getUserById(userId) {
+	async getById(userId) {
 		if (!userId) {
 			throw new Error("User ID is required");
 		}
@@ -53,22 +40,12 @@ const baseUser = {
 			}
 		}
 		return user;
-	},
-
-	async updateUser(userId, updates) {
-		await dbHelpers.dbUpdate("users", updates, { id: userId });
-	},
-
-	async deleteUser(userId) {
-		await dbHelpers.dbDelete("users", { id: userId });
 	}
-};
+}
 
-const User = withMedias(baseUser, "user", [
-	"getAllUsers",
-	"getUserByEmail",
-	"getUserById",
-	"getUserBy"
-]);
+let model = new User();
 
-export default User;
+// Enrichir avec les médias
+model = withMedias(model, "user", ["getAll", "getById", "getUserBy", "getByEmail"]);
+
+export default model;

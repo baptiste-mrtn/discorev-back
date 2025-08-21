@@ -1,33 +1,14 @@
-import dbHelpers from "../helpers/dbHelpers.js";
+import BaseModel from "./BaseModel.js";
 import { withMedias } from "../helpers/withMedias.js";
 
-const baseCandidate = {
-	async getAllCandidates() {
-		const rows = await dbHelpers.dbSelect("candidates");
-		return rows;
-	},
-
-	async createCandidate(candidateData) {
-		return await dbHelpers.dbInsert("candidates", candidateData);
-	},
-
-	async getCandidateByUserId(userId) {
-		const rows = await dbHelpers.dbSelect("candidates", { userId });
-		return rows[0];
-	},
-
-	async updateCandidate(candidateId, updates) {
-		await dbHelpers.dbUpdate("candidates", updates, { id: candidateId });
-	},
-
-	async deleteCandidate(candidateId) {
-		await dbHelpers.dbDelete("candidates", { id: candidateId });
+class Candidate extends BaseModel {
+	constructor() {
+		super("recruiters"); // table
 	}
-};
+}
 
+let model = new Candidate();
 
-const Candidate = withMedias(baseCandidate, "candidate", [
-	"getAllCandidates",
-	"getCandidateByUserId"
-]);
-export default Candidate;
+model = withMedias(model, "candidate", ["getAll", "getByUserId", "getById"]);
+
+export default model;

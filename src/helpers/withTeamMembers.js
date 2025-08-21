@@ -6,30 +6,29 @@ export function withTeamMembers(model, methodNames = []) {
 	methodNames.forEach((methodName) => {
 		const originalMethod = model[methodName];
 
-		wrappedModel[methodName] = async (...args) => {
-			const result = await originalMethod(...args);
+		if (typeof originalMethod === "function") {
+			wrappedModel[methodName] = async (...args) => {
+				const result = await originalMethod.apply(model, args); // <-- bind le contexte
 
-			// Rien à faire si aucun résultat
-			if (!result) return result;
+				if (!result) return result;
 
-			// Si c’est un seul recruteur
-			if (!Array.isArray(result)) {
-				const team = await dbHelpers.dbSelect("recruiter_team_members", {
-					recruiterId: result.id
-				});
-				result.teamMembers = team;
-				return result;
-			}
+				if (!Array.isArray(result)) {
+					const team = await dbHelpers.dbSelect("recruiter_team_members", {
+						recruiterId: result.id
+					});
+					result.teamMembers = team;
+					return result;
+				}
 
-			// Si c’est une liste de recruteurs
-			const recruiterIds = result.map((r) => r.id);
-			const teamMap = await getGroupedTeamMembers(recruiterIds);
+				const recruiterIds = result.map((r) => r.id);
+				const teamMap = await getGroupedTeamMembers(recruiterIds);
 
-			return result.map((r) => ({
-				...r,
-				teamMembers: teamMap[r.id] || []
-			}));
-		};
+				return result.map((r) => ({
+					...r,
+					teamMembers: teamMap[r.id] || []
+				}));
+			};
+		}
 	});
 
 	return wrappedModel;

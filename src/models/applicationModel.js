@@ -1,15 +1,11 @@
-import dbHelpers from "../helpers/dbHelpers.js";
+import BaseModel from "./BaseModel.js";
 
-const Application = {
-	async createApplication({ candidateId, jobOfferId, notes }) {
-		return await dbHelpers.dbInsert("applications", {
-			candidateId,
-			jobOfferId,
-			notes: notes || null
-		});
-	},
+class Application extends BaseModel {
+	constructor() {
+		super("applications"); // table
+	}
 
-	async getApplicationsByCandidateId(candidateId) {
+	async getByCandidateId(candidateId) {
 		// Requête complexe, on garde le SQL direct
 		const [rows] = await db.execute(
 			`SELECT a.*, j.title AS job_title, j.location, j.employment_type 
@@ -20,9 +16,9 @@ const Application = {
 			[candidateId]
 		);
 		return rows;
-	},
+	}
 
-	async getApplicationsByJobOfferId(jobOfferId) {
+	async getByJobOfferId(jobOfferId) {
 		// Requête complexe, on garde le SQL direct
 		const [rows] = await db.execute(
 			`SELECT a.*, c.*, u.first_name, u.last_name, u.email 
@@ -33,15 +29,11 @@ const Application = {
 			[jobOfferId]
 		);
 		return rows;
-	},
-
-	async updateApplicationStatus(applicationId, status) {
-		await dbHelpers.dbUpdate("applications", { status }, { id: applicationId });
-	},
-
-	async deleteApplication(applicationId) {
-		await dbHelpers.dbDelete("applications", { id: applicationId });
 	}
-};
 
-export default Application;
+	async updateStatus(applicationId, status) {
+		await this.update("applications", { status }, { id: applicationId });
+	}
+}
+
+export default new Application();
