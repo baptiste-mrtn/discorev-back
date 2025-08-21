@@ -83,6 +83,17 @@ const GENERIC_TABLES = [
 		}
 	},
 	{
+		name: "users",
+		middlewares: {
+			getAll: [authenticateToken, isAdmin],
+			getOne: [authenticateToken],
+			getOneByUserId: [authenticateToken],
+			create: [],
+			update: [authenticateToken],
+			delete: [authenticateToken]
+		}
+	},
+	{
 		name: "websites",
 		middlewares: {
 			getAll: [],

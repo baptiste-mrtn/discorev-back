@@ -20,7 +20,7 @@ const authenticateToken = async (req, res, next) => {
 			return res.status(400).json({ data: [], message: "Token does not contain user ID" });
 		}
 
-		const user = await User.getUserById(decoded.userId);
+		const user = await User.getById(decoded.userId);
 		if (!user) {
 			return res.status(404).json({ data: [], message: "User not found" });
 		}
