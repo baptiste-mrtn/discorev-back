@@ -1,6 +1,7 @@
 import mysql from "mysql2/promise";
 import "dotenv/config";
 
+// Pool principal (pour les requêtes classiques)
 const db = mysql.createPool({
 	host: process.env.DB_HOST,
 	user: process.env.DB_USER,
