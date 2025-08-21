@@ -1,40 +1,39 @@
-import db from "../config/db.js";
-import conversion from "../utils/conversion.js";
+import dbHelpers from '../helpers/dbHelpers.js';
 
 const History = {
-	async logAction(historyData) {
-		const historyDataSnakeCase = await conversion.camelToSnake({
-			...historyData
-		});
-		const columns = Object.keys(historyDataSnakeCase).join(", ");
-		const placeholders = Object.keys(historyDataSnakeCase)
-			.map(() => "?")
-			.join(", ");
-		const values = Object.values(historyDataSnakeCase);
-		console.log(values);
 
-		const [result] = await db.execute(
-			`INSERT INTO histories (${columns}) VALUES (${placeholders})`,
-			values
-		);
-		return result.insertId;
+	async logLogin(userId) {
+		return await dbHelpers.dbInsert('histories', {
+			userId,
+			relatedType: 'auth',
+			actionType: 'login',
+		});
 	},
 
+	async logAction({userId, relatedId = null, relatedType, actionType, details = null}) {
+		return await dbHelpers.dbInsert('histories', {
+			userId,
+			relatedId,
+			relatedType,
+			actionType,
+			details
+		});
+	},
+
+
 	async getUserHistory(userId) {
-		const [rows] = await db.execute(
-			`SELECT * FROM histories WHERE user_id = ? ORDER BY created_at DESC`,
-			[userId]
-		);
-		return rows;
+		const rows = await dbHelpers.dbSelect('histories', { userId });
+		// Tri côté JS si nécessaire
+		return rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 	},
 
 	async getAllHistory() {
-		const [rows] = await db.execute(`SELECT * FROM histories ORDER BY created_at DESC`);
-		return rows;
+		const rows = await dbHelpers.dbSelect('histories');
+		return rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 	},
 
 	async deleteHistoryById(historyId) {
-		await db.execute(`DELETE FROM histories WHERE id = ?`, [historyId]);
+		await dbHelpers.dbDelete('histories', { id: historyId });
 	}
 };
 

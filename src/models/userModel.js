@@ -1,45 +1,32 @@
-import db from "../config/db.js";
-import conversion from "../utils/conversion.js";
+import dbHelpers from "../helpers/dbHelpers.js";
 import bcrypt from "bcrypt";
+import { withMedias } from "../helpers/withMedias.js";
 
-const User = {
+const baseUser = {
 	async getAllUsers() {
-		const [rows] = await db.execute("SELECT * FROM users");
+		const rows = await dbHelpers.dbSelect("users");
 		return rows;
 	},
 
 	async createUser(userData) {
 		const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-		// Convertir les clés camelCase en snake_case
-		const userDataSnakeCase = await conversion.camelToSnake({
+		// Ajouter le hashedPassword dans userData
+		const userDataWithHashedPassword = {
 			...userData,
 			password: hashedPassword
-		});
+		};
 
-		// Extraire les noms des colonnes et les valeurs
-		const columns = Object.keys(userDataSnakeCase).join(", ");
-		const placeholders = Object.keys(userDataSnakeCase)
-			.map(() => "?")
-			.join(", ");
-		const values = Object.values(userDataSnakeCase);
-
-		const [result] = await db.execute(
-			`INSERT INTO users (${columns}) VALUES (${placeholders})`,
-			values
-		);
-		return result.insertId;
+		return await dbHelpers.dbInsert("users", userDataWithHashedPassword);
 	},
 
 	async getUserByEmail(email) {
-		const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+		const rows = await dbHelpers.dbSelect("users", { email });
 		return rows[0];
 	},
 
 	async getUserBy(field, value) {
-		field = conversion.camelToSnake(field);
-		const query = `SELECT * FROM users WHERE ${field} = ?`;
-		const [rows] = await db.execute(query, [value]);
+		const rows = await dbHelpers.dbSelect("users", { [field]: value });
 		return rows[0];
 	},
 
@@ -48,45 +35,40 @@ const User = {
 			throw new Error("User ID is required");
 		}
 
-		const [rows] = await db.execute(
-			`SELECT u.*, 
-                    (SELECT c.id FROM candidates c WHERE c.user_id = u.id) AS candidate_id,
-                    (SELECT r.id FROM recruiters r WHERE r.user_id = u.id) AS recruiter_id
-             FROM users u
-             WHERE u.id = ?`,
-			[userId]
-		);
-
+		const rows = await dbHelpers.dbSelect("users", { id: userId });
 		if (rows.length === 0) {
 			return null;
 		}
-
 		const user = rows[0];
-
+		// Ajout des champs candidate_id et recruiter_id si besoin
+		// Nécessite une requête supplémentaire car dbHelpers ne gère pas les sous-requêtes
+		const candidateRows = await dbHelpers.dbSelect("candidates", { userId: user.id });
+		const recruiterRows = await dbHelpers.dbSelect("recruiters", { userId: user.id });
+		user.candidate_id = candidateRows[0]?.id || null;
+		user.recruiter_id = recruiterRows[0]?.id || null;
 		// Remplacer les valeurs undefined par null
 		for (const key in user) {
 			if (user[key] === undefined) {
 				user[key] = null;
 			}
 		}
-
 		return user;
 	},
 
 	async updateUser(userId, updates) {
-		updates = await conversion.camelToSnake(updates);
-		const fields = Object.keys(updates)
-			.map((field) => `${field} = ?`)
-			.join(", ");
-		const values = Object.values(updates);
-		values.push(userId);
-
-		await db.execute(`UPDATE users SET ${fields} WHERE id = ?`, values);
+		await dbHelpers.dbUpdate("users", updates, { id: userId });
 	},
 
 	async deleteUser(userId) {
-		await db.execute("DELETE FROM users WHERE id = ?", [userId]);
+		await dbHelpers.dbDelete("users", { id: userId });
 	}
 };
+
+const User = withMedias(baseUser, "user", [
+	"getAllUsers",
+	"getUserByEmail",
+	"getUserById",
+	"getUserBy"
+]);
 
 export default User;

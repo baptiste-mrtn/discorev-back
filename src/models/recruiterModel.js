@@ -1,53 +1,54 @@
-import db from "../config/db.js";
-import conversion from "../utils/conversion.js";
+import dbHelpers from "../helpers/dbHelpers.js";
+import { withMedias } from "../helpers/withMedias.js";
+import { withTeamMembers } from "../helpers/withTeamMembers.js";
 
-const Recruiter = {
+const baseRecruiter = {
 	async getAllRecruiters() {
-		const [rows] = await db.execute("SELECT * FROM recruiters");
+		const rows = await dbHelpers.dbSelect("recruiters");
 		return rows;
 	},
 
 	async createRecruiter(recruiterData) {
-		const recruiterDataSnakeCase = await conversion.camelToSnake(recruiterData);
-
-		const columns = Object.keys(recruiterDataSnakeCase).join(", ");
-		const placeholders = Object.keys(recruiterDataSnakeCase)
-			.map(() => "?")
-			.join(", ");
-		const values = Object.values(recruiterDataSnakeCase);
-
-		const [result] = await db.execute(
-			`INSERT INTO recruiters (${columns}) VALUES (${placeholders})`,
-			values
-		);
-		return result.insertId;
+		return await dbHelpers.dbInsert("recruiters", recruiterData);
 	},
 
 	async getRecruiterByUserId(userId) {
-		const [rows] = await db.execute("SELECT * FROM recruiters WHERE user_id = ?", [userId]);
+		const rows = await dbHelpers.dbSelect("recruiters", { userId });
 		return rows[0];
 	},
 
 	async getRecruiterById(recruiterId) {
-		const [rows] = await db.execute("SELECT * FROM recruiters WHERE id = ?", [recruiterId]);
-		console.log("rows", rows);
-		return conversion.snakeToCamel(rows[0]);
+		const rows = await dbHelpers.dbSelect("recruiters", { id: recruiterId });
+		return rows[0];
+	},
+
+	async getRecruiterByCompanyName(companyName) {
+		const rows = await dbHelpers.dbSelect("recruiters", { companyName });
+		return rows[0];
 	},
 
 	async updateRecruiter(recruiterId, updates) {
-		updates = await conversion.camelToSnake(updates);
-		const fields = Object.keys(updates)
-			.map((field) => `${field} = ?`)
-			.join(", ");
-		const values = Object.values(updates);
-		values.push(recruiterId);
-
-		await db.execute(`UPDATE recruiters SET ${fields} WHERE id = ?`, values);
+		await dbHelpers.dbUpdate("recruiters", updates, { id: recruiterId });
 	},
 
 	async deleteRecruiter(recruiterId) {
-		await db.execute("DELETE FROM recruiters WHERE id = ?", [recruiterId]);
+		await dbHelpers.dbDelete("recruiters", { id: recruiterId });
 	}
 };
 
+// Étape 1 : enrichir avec les membres
+const recruiterWithTeam = withTeamMembers(baseRecruiter, [
+	"getAllRecruiters",
+	"getRecruiterByUserId",
+	"getRecruiterById",
+	"getRecruiterByCompanyName"
+]);
+
+// Étape 2 : enrichir avec les médias (si besoin)
+const Recruiter = withMedias(recruiterWithTeam, "recruiter", [
+	"getAllRecruiters",
+	"getRecruiterByUserId",
+	"getRecruiterById",
+	"getRecruiterByCompanyName"
+]);
 export default Recruiter;

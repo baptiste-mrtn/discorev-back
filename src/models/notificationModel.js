@@ -1,57 +1,40 @@
-import db  from '../config/db.js';
+import dbHelpers from '../helpers/dbHelpers.js';
 
 const Notification = {
     async createNotification({ userId, relatedId, relatedType, type, message }) {
-        const [result] = await db.execute(
-            `INSERT INTO notifications (user_id, related_id, related_type, type, message) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [userId, relatedId, relatedType, type, message]
-        );
-        return result.insertId;
+        return await dbHelpers.dbInsert('notifications', {
+            userId,
+            relatedId,
+            relatedType,
+            type,
+            message
+        });
     },
 
     async getNotificationsByUserId(userId) {
-        const [rows] = await db.execute(
-            `SELECT * FROM notifications 
-             WHERE user_id = ? 
-             ORDER BY created_at DESC`,
-            [userId]
-        );
-        return rows;
+        const rows = await dbHelpers.dbSelect('notifications', { userId });
+        // Tri côté JS si besoin
+        return rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
 
     async markNotificationAsRead(notificationId) {
-        await db.execute(
-            `UPDATE notifications 
-             SET is_read = TRUE 
-             WHERE id = ?`,
-            [notificationId]
-        );
+        await dbHelpers.dbUpdate('notifications', { isRead: true }, { id: notificationId });
     },
 
     async markAllNotificationsAsRead(userId) {
-        await db.execute(
-            `UPDATE notifications 
-             SET is_read = TRUE 
-             WHERE user_id = ? AND is_read = FALSE`,
-            [userId]
-        );
+        // dbHelpers ne gère pas les conditions complexes, on récupère puis on met à jour
+        const rows = await dbHelpers.dbSelect('notifications', { userId, isRead: false });
+        for (const notif of rows) {
+            await dbHelpers.dbUpdate('notifications', { isRead: true }, { id: notif.id });
+        }
     },
 
     async deleteNotification(notificationId) {
-        await db.execute(
-            `DELETE FROM notifications 
-             WHERE id = ?`,
-            [notificationId]
-        );
+        await dbHelpers.dbDelete('notifications', { id: notificationId });
     },
 
     async deleteAllNotifications(userId) {
-        await db.execute(
-            `DELETE FROM notifications 
-             WHERE user_id = ?`,
-            [userId]
-        );
+        await dbHelpers.dbDelete('notifications', { userId });
     },
 };
 
