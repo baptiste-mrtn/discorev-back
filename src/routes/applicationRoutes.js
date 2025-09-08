@@ -29,6 +29,6 @@ router.patch(
 );
 
 // Supprimer une candidature
-router.delete("/:applicationId", authenticateToken, ApplicationController.delete);
+router.delete("/:id", authenticateToken, ApplicationController.delete);
 
 export default router;

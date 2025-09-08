@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20),
     account_type ENUM('candidate', 'recruiter', 'admin') NOT NULL,
+    refresh_token TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
@@ -178,7 +179,8 @@ CREATE TABLE IF NOT EXISTS job_offers (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     requirements TEXT,
-    salary_range VARCHAR(50),
+    salary_min INT,
+    salary_max INT,
     employment_type ENUM('cdi', 'cdd', 'freelance', 'alternance', 'stage'),
     location VARCHAR(255),
     remote BOOLEAN DEFAULT FALSE,
@@ -186,7 +188,10 @@ CREATE TABLE IF NOT EXISTS job_offers (
     expiration_date DATETIME,
     start_date DATETIME,
     end_date DATETIME,
-    status ENUM('active', 'inactive', 'draft') DEFAULT 'active',
+    deleted_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('active', 'inactive', 'draft', 'archived') DEFAULT 'active',
     FOREIGN KEY (recruiter_id) REFERENCES recruiters(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS applications (

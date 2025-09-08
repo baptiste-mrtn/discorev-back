@@ -1,40 +1,56 @@
 import BaseModel from "./BaseModel.js";
-import dbHelpers from "../helpers/dbHelpers.js";
+import db from "../config/db.js";
+import path from "path";
+import fs from "fs";
 
 class Media extends BaseModel {
 	constructor() {
-		super("medias"); // table
+		super("medias");
 	}
 
-	/**
-	 * Récupère tous les médias d'un utilisateur
-	 * @param {Number} userId - ID de l'utilisateur
-	 * @returns {Array} - Liste des médias
-	 */
 	async getByUserId(userId) {
-		return await dbHelpers.dbSelect("medias", { userId });
+		const [rows] = await db.execute(
+			`SELECT * FROM ${this.table} WHERE target_type = 'user' AND target_id = ?`,
+			[userId]
+		);
+		return rows;
 	}
 
-	/**
-	 * Récupère tous les médias d'un type d'utilisateur
-	 * @param {String} targetType - Type de l'utilisateur (recruiter, candidate, user)
-	 * @param {Number} targetId - ID de l'utilisateur
-	 * @returns {Array} - Liste des médias
-	 */
 	async getByTarget(targetType, targetId) {
-		const rows = await dbHelpers.dbSelect("medias", {
-			targetType,
-			targetId
-		});
+		const [rows] = await db.execute(
+			`SELECT * FROM ${this.table} WHERE target_type = ? AND target_id = ?`,
+			[targetType, targetId]
+		);
 		return rows;
 	}
 
 	/**
-	 * Supprime un média doublon
-	 * @param {Number} mediaId - ID du média
+	 * Supprime tous les médias d’un type spécifique pour un utilisateur (avec suppression physique)
 	 */
 	async deleteMediaByContext(targetType, targetId, type) {
-		await dbHelpers.dbDelete("medias", { targetType, targetId, type });
+		// Récupérer tous les médias concernés
+		const [medias] = await db.execute(
+			`SELECT * FROM ${this.table} WHERE target_type = ? AND target_id = ? AND type = ?`,
+			[targetType, targetId, type]
+		);
+
+		// Supprimer les fichiers physiques
+		for (const media of medias) {
+			const fullPath = path.resolve(process.cwd(), media.file_path);
+			if (fs.existsSync(fullPath)) {
+				fs.unlinkSync(fullPath);
+			}
+			if (media.thumbnail_path) {
+				const thumbPath = path.resolve(process.cwd(), media.thumbnail_path);
+				if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
+			}
+		}
+
+		// Supprimer les entrées en BDD
+		await db.execute(
+			`DELETE FROM ${this.table} WHERE target_type = ? AND target_id = ? AND type = ?`,
+			[targetType, targetId, type]
+		);
 	}
 }
 

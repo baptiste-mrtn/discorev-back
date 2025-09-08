@@ -1,39 +1,36 @@
 import dbHelpers from "./dbHelpers.js";
 
-export function withTeamMembers(model, methodNames = []) {
-	const wrappedModel = { ...model };
+export async function withTeamMembers(result, ...args) {
+	const model = args[args.length - 1]; // dernier argument = modèle
+	if (!result) return result;
 
-	methodNames.forEach((methodName) => {
-		const originalMethod = model[methodName];
+	// si résultat unique
+	if (!Array.isArray(result)) {
+		const team = await dbHelpers.dbSelect("recruiter_team_members", {
+			recruiter_id: result.id
+		});
+		result.teamMembers = team;
+		return result;
+	}
 
-		if (typeof originalMethod === "function") {
-			wrappedModel[methodName] = async (...args) => {
-				const result = await originalMethod.apply(model, args); // <-- bind le contexte
+	// si tableau
+	const recruiterIds = result.map((r) => r.id);
+	const rows = await dbHelpers.rawQuery(
+		`SELECT * FROM recruiter_team_members WHERE recruiter_id IN (${recruiterIds
+			.map(() => "?")
+			.join(",")})`,
+		recruiterIds
+	);
 
-				if (!result) return result;
+	const camelRows = rows.map((r) => dbHelpers.camelcaseKeys(r));
+	const grouped = camelRows.reduce((acc, m) => {
+		if (!acc[m.recruiterId]) acc[m.recruiterId] = [];
+		acc[m.recruiterId].push(m);
+		return acc;
+	}, {});
 
-				if (!Array.isArray(result)) {
-					const team = await dbHelpers.dbSelect("recruiter_team_members", {
-						recruiterId: result.id
-					});
-					result.teamMembers = team;
-					return result;
-				}
-
-				const recruiterIds = result.map((r) => r.id);
-				const teamMap = await getGroupedTeamMembers(recruiterIds);
-
-				return result.map((r) => ({
-					...r,
-					teamMembers: teamMap[r.id] || []
-				}));
-			};
-		}
-	});
-
-	return wrappedModel;
+	return result.map((r) => ({ ...r, teamMembers: grouped[r.id] || [] }));
 }
-
 async function getGroupedTeamMembers(recruiterIds) {
 	if (recruiterIds.length === 0) return {};
 

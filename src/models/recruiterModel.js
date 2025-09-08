@@ -1,24 +1,28 @@
 import BaseModel from "./BaseModel.js";
-import { withMedias } from "../helpers/withMedias.js";
+import { enrichModel } from "../helpers/enrichModel.js";
 import { withTeamMembers } from "../helpers/withTeamMembers.js";
+import { withMedias } from "../helpers/withMedias.js";
 
 class Recruiter extends BaseModel {
 	constructor() {
-		super("recruiters"); // table
+		super("recruiters");
 	}
 
-	async getByCompanyName(companyName) {
-		const rows = await this.getAll({ companyName });
-		return rows[0] || null;
+	async getByCompanyName(name) {
+		const row = await this.getBy("companyName", name);
+		return row || null;
 	}
 }
 
-let model = new Recruiter();
-
-// Étape 1 : enrichir avec les membres
-model = withTeamMembers(model, ["getAll", "getById", "getByUserId", "getByCompanyName"]);
-
-// Étape 2 : enrichir avec les médias
-model = withMedias(model, "recruiter", ["getAll", "getById", "getByUserId", "getByCompanyName"]);
+const model = enrichModel(new Recruiter(), [
+	{
+		methods: ["getAll", "getById", "getByUserId", "getByCompanyName"],
+		enhancer: withTeamMembers
+	},
+	{
+		methods: ["getAll", "getById", "getByUserId", "getByCompanyName"],
+		enhancer: (res) => withMedias(res, "recruiter")
+	}
+]);
 
 export default model;

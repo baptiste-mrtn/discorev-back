@@ -54,10 +54,19 @@ class BaseModel {
 		const [rows] = await db.execute(`SELECT * FROM ${this.table} WHERE id = ?`, [id]);
 		return rows.length ? camelcaseKeys(rows[0]) : null;
 	}
+
 	// CRUD générique
 	async getByUserId(userid) {
 		const [rows] = await db.execute(`SELECT * FROM ${this.table} WHERE user_id = ?`, [userid]);
 		return rows.length ? camelcaseKeys(rows[0]) : null;
+	}
+
+	async getBy(column, value) {
+		const filters = snakecaseKeys({ [column]: value });
+		const key = Object.keys(filters)[0];
+		const val = Object.values(filters)[0];
+		const [rows] = await db.execute(`SELECT * FROM ${this.table} WHERE ${key} = ?`, [val]);
+		return camelcaseKeys(rows); // un tableau
 	}
 
 	async create(data) {

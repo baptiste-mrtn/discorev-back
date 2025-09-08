@@ -4,11 +4,11 @@ import db from "../src/config/db.js";
 async function createSuperAdmin() {
 	try {
 		// Remplis ces informations pour créer le super admin
-		const firstName = "";
-		const lastName = "";
-		const email = "";
-		const password = ""; // 🔒 choisis un bon mot de passe fort
-		const phoneNumber = ""; // Optionnel, si tu veux l'ajouter
+		const firstName = "***REMOVED***";
+		const lastName = "***REMOVED***";
+		const email = "***REMOVED***";
+		const password = "***REMOVED***"; // 🔒 choisis un bon mot de passe fort
+		const phoneNumber = "***REMOVED***"; // Optionnel, si tu veux l'ajouter
 
 		// 1️⃣ Hash du mot de passe
 		const hashedPassword = await bcrypt.hash(password, 10);

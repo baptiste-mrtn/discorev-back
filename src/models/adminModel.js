@@ -1,5 +1,6 @@
 import BaseModel from "./BaseModel.js";
 import { withMedias } from "../helpers/withMedias.js";
+import { enrichModel } from "../helpers/enrichModel.js";
 
 class Admin extends BaseModel {
 	constructor() {
@@ -7,9 +8,11 @@ class Admin extends BaseModel {
 	}
 }
 
-let model = new Admin();
-
 // Enrichir avec les médias
-model = withMedias(model, "admin", ["getAll", "getById", "getByUserId"]);
-
+const model = enrichModel(new Admin(), [
+	{
+		methods: ["getAll", "getById", "getByUserId"],
+		enhancer: (res) => withMedias(res, "admin")
+	}
+]);
 export default model;

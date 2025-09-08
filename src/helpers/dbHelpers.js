@@ -54,47 +54,6 @@ async function dbSelect(table, filters = {}) {
 	return rows.map((row) => camelcaseKeys(row));
 }
 
-async function dbSelectPaginated(table, filters = {}, options = {}) {
-	if (!ALLOWED_TABLES.includes(table)) {
-		throw new Error("Table not allowed for selection");
-	}
-
-	const snakeFilters = snakecaseKeys(filters);
-
-	const whereClause = Object.keys(snakeFilters)
-		.map((key) => `${key} = ?`)
-		.join(" AND ");
-
-	const values = Object.values(snakeFilters);
-
-	const page = options.page && options.page > 0 ? options.page : 1;
-	const limit = options.limit && options.limit > 0 ? options.limit : 10;
-	const offset = (page - 1) * limit;
-
-	// Option de tri
-	const orderBy = options.orderBy ? options.orderBy : "id ASC";
-
-	// 1. Compter le total avec les filtres
-	const countSql = `SELECT COUNT(*) as total FROM \`${table}\` ${
-		whereClause ? "WHERE " + whereClause : ""
-	}`;
-	const [countResult] = await db.execute(countSql, values);
-	const total = countResult[0].total;
-
-	// 2. Récupérer les résultats paginés
-	const sql = `SELECT * FROM \`${table}\` ${
-		whereClause ? "WHERE " + whereClause : ""
-	} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
-	const [rows] = await db.execute(sql, [...values, limit, offset]);
-
-	return {
-		results: rows.map((row) => camelcaseKeys(row)),
-		total,
-		page,
-		limit
-	};
-}
-
 // UPDATE
 async function dbUpdate(table, data, filters) {
 	if (!ALLOWED_TABLES.includes(table)) {
@@ -137,7 +96,6 @@ async function rawQuery(sql, params = []) {
 export default {
 	dbInsert,
 	dbSelect,
-	dbSelectPaginated,
 	dbUpdate,
 	dbDelete,
 	rawQuery,

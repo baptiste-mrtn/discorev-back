@@ -8,6 +8,7 @@ import fs from "fs";
 
 // Import des routes
 import authRoutes from "./src/routes/authRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 import documentRoutes from "./src/routes/documentRoutes.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
@@ -80,17 +81,6 @@ const GENERIC_TABLES = [
 			create: [authenticateToken, isAdmin],
 			update: [authenticateToken, isAdmin],
 			delete: [authenticateToken, isAdmin]
-		}
-	},
-	{
-		name: "users",
-		middlewares: {
-			getAll: [authenticateToken, isAdmin],
-			getOne: [authenticateToken],
-			getOneByUserId: [authenticateToken],
-			create: [],
-			update: [authenticateToken],
-			delete: [authenticateToken]
 		}
 	},
 	{
@@ -170,6 +160,7 @@ GENERIC_TABLES.forEach(async ({ name, middlewares }) => {
 
 // **Routes**
 app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
 app.use("/documents", documentRoutes);
 app.use("/medias", mediaRoutes);
 app.use("/upload", uploadRoutes);
@@ -211,7 +202,34 @@ app.use((req, res) => {
 // **Démarrage du serveur**
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
+	listRoutes(app);
 	console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+function listRoutes(app) {
+	const printRoutes = (stack, basePath = "") => {
+		stack.forEach((middleware) => {
+			if (middleware.route) {
+				// Route simple
+				const methods = Object.keys(middleware.route.methods)
+					.map((m) => m.toUpperCase())
+					.join(", ");
+				console.log(`${methods} ${basePath}${middleware.route.path}`);
+			} else if (middleware.name === "router" && middleware.handle.stack) {
+				// Router monté
+				const newBasePath =
+					basePath +
+					(middleware.regexp.source
+						.replace("^\\", "") // nettoie regex
+						.replace("\\/?(?=\\/|$)", "")
+						.replace(/\\\//g, "/")
+						.replace(/(\(\?:\(\?\=\/\|\$\)\))\?$/, "") || "");
+				printRoutes(middleware.handle.stack, newBasePath);
+			}
+		});
+	};
+
+	printRoutes(app._router.stack);
+}
 
 export default app;

@@ -1,5 +1,4 @@
 import BaseModel from "./BaseModel.js";
-import dbHelpers from "../helpers/dbHelpers.js";
 
 class Document extends BaseModel {
 	constructor() {
@@ -13,7 +12,7 @@ class Document extends BaseModel {
 	 */
 	async getBySenderId(senderId) {
 		try {
-			const rows = await dbHelpers.dbSelect("documents", { senderId });
+			const rows = await this.getBy("sender_id", senderId);
 			return rows;
 		} catch (error) {
 			console.error("Error fetching documents by sender ID:", error);

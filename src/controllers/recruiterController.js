@@ -8,17 +8,6 @@ class RecruiterController extends BaseController {
 		super(Recruiter);
 	}
 
-	getByUserId = async (req, res) => {
-		try {
-			const recruiter = await this.model.getByUserId(req.params.id);
-			if (!recruiter) return res.status(404).json({ message: "Recruiter not found" });
-			res.status(200).json({ data: recruiter, message: "Recruiter founded" });
-		} catch (err) {
-			console.error(err);
-			res.status(500).json({ message: "Internal server error" });
-		}
-	};
-
 	getByCompanyName = async (req, res) => {
 		try {
 			const recruiter = await this.model.getByCompanyName(req.params.name);
@@ -32,7 +21,7 @@ class RecruiterController extends BaseController {
 
 	delete = async (req, res) => {
 		try {
-			const recruiter = await this.model.getByUserId(req.params.id);
+			const recruiter = await this.model.getOneByUserId(req.params.id);
 			if (!recruiter) return res.status(404).json({ message: "Recruiter not found" });
 
 			await deleteRecruiterFiles(req.params.id);

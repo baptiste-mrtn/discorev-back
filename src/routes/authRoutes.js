@@ -9,5 +9,6 @@ router.post("/login", AuthController.login);
 router.get("/me", authenticateToken, AuthController.getCurrentUser);
 router.post("/refresh-token", AuthController.refreshToken);
 router.get("/verify", AuthController.verifyToken);
+router.get("/logout", AuthController.logout);
 
 export default router;

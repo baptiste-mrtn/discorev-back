@@ -8,12 +8,28 @@ class UserController extends BaseController {
 		super(User);
 	}
 
+
+	getOneByEmail = async (req, res) => {
+		const email = req.params.email;
+
+		try {
+			const user = await User.getByEmail(email);
+			if (!user) {
+				return res.status(404).json({ message: "User not found" });
+			}
+			return res.status(200).json({ data: user, message: "User retrieved successfully" });
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({ message: "Internal server error" });
+		}
+	}
+
 	// Delete a user
 	delete = async (req, res) => {
 		const userId = req.params.id;
 
 		try {
-			const user = await User.getUserById(userId);
+			const user = await User.getById(userId);
 			if (!user) {
 				return res.status(404).json({ message: "User not found" });
 			}

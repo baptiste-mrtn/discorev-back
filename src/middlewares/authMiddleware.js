@@ -15,6 +15,7 @@ const authenticateToken = async (req, res, next) => {
 
 	try {
 		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		console.log("JWT_SECRET in middleware:", process.env.JWT_SECRET);
 
 		if (!decoded.userId) {
 			return res.status(400).json({ data: [], message: "Token does not contain user ID" });
@@ -30,6 +31,10 @@ const authenticateToken = async (req, res, next) => {
 
 		next();
 	} catch (err) {
+		console.error("JWT error:", err);
+		if (err.name === "TokenExpiredError") {
+			return res.status(401).json({ data: [], message: "Token expired" }); // <-- important pour Laravel
+		}
 		return res.status(403).json({ data: [], message: "Invalid token" });
 	}
 };

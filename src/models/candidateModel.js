@@ -1,14 +1,19 @@
 import BaseModel from "./BaseModel.js";
 import { withMedias } from "../helpers/withMedias.js";
+import { enrichModel } from "../helpers/enrichModel.js";
 
 class Candidate extends BaseModel {
 	constructor() {
-		super("recruiters"); // table
+		super("candidates"); // table
 	}
 }
 
-let model = new Candidate();
-
-model = withMedias(model, "candidate", ["getAll", "getByUserId", "getById"]);
+// instance enrichie, toutes les méthodes de BaseModel restent accessibles
+const model = enrichModel(new Candidate(), [
+	{
+		methods: ["getAll", "getById", "getByUserId", "getByCompanyName"],
+		enhancer: (orig, ...args) => withMedias(orig, "candidate", args)
+	}
+]);
 
 export default model;

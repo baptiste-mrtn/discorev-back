@@ -6,6 +6,7 @@ class BaseController {
 	getAll = async (req, res, next) => {
 		try {
 			const data = await this.model.getAll(req.query); // on passe query = filtres
+			console.log(`Retrieved ${data.length} items from ${this.model.table}`);
 			res.status(200).json({ message: "Retrieved successfully", data });
 		} catch (err) {
 			next(err);
@@ -15,7 +16,9 @@ class BaseController {
 	getOne = async (req, res, next) => {
 		try {
 			const item = await this.model.getById(req.params.id);
+			console.log(`Retrieved item with ID ${req.params.id} from ${this.model.table}`);
 			if (!item) return res.status(404).json({ message: "Not found" });
+			console.log(item);
 			res.status(200).json({ message: "Retrieved successfully", data: item });
 		} catch (err) {
 			next(err);
@@ -24,8 +27,10 @@ class BaseController {
 
 	getOneByUserId = async (req, res, next) => {
 		try {
-			const item = await this.model.getByUserId(req.params.id);
+			const item = await this.model.getByUserId(req.params.userId);
+			console.log(`Retrieved item for user ID ${req.params.userId} from ${this.model.table}`);
 			if (!item) return res.status(404).json({ message: "Not found" });
+			console.log(item);
 			res.status(200).json({ message: "Retrieved successfully", data: item });
 		} catch (err) {
 			next(err);
@@ -35,7 +40,8 @@ class BaseController {
 	create = async (req, res, next) => {
 		try {
 			const item = await this.model.create(req.body);
-			res.status(201).json({ message: "Created successfully", data: item });
+			console.log(`Created new item in ${this.model.table}`);
+			res.status(201).json({ message: "Created successfully", data: { id: item } });
 		} catch (err) {
 			next(err);
 		}
@@ -44,7 +50,13 @@ class BaseController {
 	update = async (req, res, next) => {
 		try {
 			const item = await this.model.update(req.params.id, req.body);
-			res.status(200).json({ message: "Updated successfully", data: item });
+			console.log(`Updated item with ID ${req.params.id} in ${this.model.table}`);
+
+			// Même logique
+			res.status(200).json({
+				message: "Updated successfully",
+				data: { id: req.params.id } // objet
+			});
 		} catch (err) {
 			next(err);
 		}
@@ -53,6 +65,7 @@ class BaseController {
 	delete = async (req, res, next) => {
 		try {
 			const result = await this.model.delete(req.params.id);
+			console.log(`Deleted item with ID ${req.params.id} from ${this.model.table}`);
 			res.status(200).json({ message: "Deleted successfully", data: result });
 		} catch (err) {
 			next(err);
