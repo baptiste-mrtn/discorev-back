@@ -4,9 +4,9 @@ import db from "../src/config/db.js";
 async function createSuperAdmin() {
 	try {
 		// Remplis ces informations pour créer le super admin
-		const firstName = "***REMOVED***";
-		const lastName = "***REMOVED***";
-		const email = "***REMOVED***";
+		const firstName = "Baptiste";
+		const lastName = "Martin";
+		const email = "baptiste.mrtn@outlook.com";
 		const password = "***REMOVED***"; // 🔒 choisis un bon mot de passe fort
 		const phoneNumber = "***REMOVED***"; // Optionnel, si tu veux l'ajouter
 

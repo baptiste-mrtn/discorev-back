@@ -12,7 +12,7 @@
 		"discorev",
 		"application"
 	],
-	"author": "***REMOVED*** ***REMOVED***",
+	"author": "Baptiste Martin",
 	"license": "ISC",
 	"description": "Back-end for Discorev application",
 	"dependencies": {

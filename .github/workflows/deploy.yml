@@ -22,4 +22,4 @@ jobs:
                   echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
                   chmod 600 ~/.ssh/id_rsa
                   ssh-keyscan -H $VPS_IP >> ~/.ssh/known_hosts
-                  rsync -avz --delete ./ ubuntu@$VPS_IP:/var/www/discorev-back/
+                  rsync -avz --delete ./ ubuntu@$VPS_IP:var/www/discorev-back/
