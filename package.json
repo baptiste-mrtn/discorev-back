@@ -4,6 +4,7 @@
 	"main": "server.js",
 	"type": "module",
 	"scripts": {
+		"backup": "node sync/backup.js",
 		"migrate": "node sync/migrate.js",
 		"test": "jest",
 		"start": "node server.js"
