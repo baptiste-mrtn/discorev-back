@@ -30,10 +30,10 @@ jobs:
 
                   # Synchronisation sans écraser .env et node_modules
                   rsync -avz --delete \
-                  -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
-                  --exclude='.env' \
-                  --exclude='node_modules' \
-                  ./ ubuntu@$VPS_IP:/var/www/discorev-back/
+                    -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
+                    --exclude='.env' \
+                    --exclude='node_modules' \
+                    ./ ubuntu@$VPS_IP:/var/www/discorev-back/
 
             - name: Install dependencies, migrate DB and restart server
               env:
@@ -45,12 +45,16 @@ jobs:
                   ssh -p $VPS_PORT -i ~/.ssh/id_rsa ubuntu@$VPS_IP << 'EOF'
                     cd /var/www/discorev-back
 
+                    # Charger NVM pour rendre npm/npx disponibles
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
                     echo "📦 Installation des dépendances..."
-                    npm install --production
+                    npm install --omit=dev
 
                     echo "🔄 Lancement des migrations..."
                     npm run migrate
 
                     echo "🚀 Redémarrage du serveur..."
-                    npx pm2 restart discorev || npx pm2 start server.js --name discorev
+                    pm2 restart discorev || pm2 start server.js --name discorev
                   EOF
