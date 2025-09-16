@@ -1,51 +1,56 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    deploy:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Install rsync (just in case)
-        run: sudo apt-get update && sudo apt-get install -y rsync
+            - name: Install rsync (just in case)
+              run: sudo apt-get update && sudo apt-get install -y rsync
 
-      - name: Copy files to VPS (exclude .env & node_modules)
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
-          VPS_IP: ${{ secrets.VPS_IPV4 }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $VPS_IP >> ~/.ssh/known_hosts
+            - name: Copy files to VPS (exclude .env & node_modules)
+              env:
+                  SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
+                  VPS_IP: ${{ secrets.VPS_IPV4 }}
+                  VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
 
-          # Synchronisation sans écraser .env et node_modules
-          rsync -avz --delete \
-            --exclude='.env' \
-            --exclude='node_modules' \
-            ./ ubuntu@$VPS_IP:/var/www/discorev-back/
+              run: |
+                  mkdir -p ~/.ssh
+                  echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+                  chmod 600 ~/.ssh/id_rsa
+                  ssh-keyscan -p $VPS_PORT -H $VPS_IP >> ~/.ssh/known_hosts
 
-      - name: Install dependencies, migrate DB and restart server
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
-          VPS_IP: ${{ secrets.VPS_IPV4 }}
-        run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@$VPS_IP << 'EOF'
-            cd /var/www/discorev-back
+                  # Synchronisation sans écraser .env et node_modules
+                  rsync -avz --delete \
+                  -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
+                  --exclude='.env' \
+                  --exclude='node_modules' \
+                  ./ ubuntu@$VPS_IP:/var/www/discorev-back/
 
-            echo "📦 Installation des dépendances..."
-            npm install --production
-            
-            echo "🔄 Lancement des migrations..."
-            npm run migrate
+            - name: Install dependencies, migrate DB and restart server
+              env:
+                  SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
+                  VPS_IP: ${{ secrets.VPS_IPV4 }}
+                  VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
 
-            echo "🚀 Redémarrage du serveur..."
-            npx pm2 restart discorev || npx pm2 start server.js --name discorev
-          EOF
+              run: |
+                  ssh -p $VPS_PORT -i ~/.ssh/id_rsa ubuntu@$VPS_IP << 'EOF'
+                    cd /var/www/discorev-back
+
+                    echo "📦 Installation des dépendances..."
+                    npm install --production
+
+                    echo "🔄 Lancement des migrations..."
+                    npm run migrate
+
+                    echo "🚀 Redémarrage du serveur..."
+                    npx pm2 restart discorev || npx pm2 start server.js --name discorev
+                  EOF
