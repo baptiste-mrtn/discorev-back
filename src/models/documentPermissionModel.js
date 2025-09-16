@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 import dbHelpers from "../helpers/dbHelpers.js";
 
 class DocumentPermission extends BaseModel {

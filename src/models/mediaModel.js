@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 import db from "../config/db.js";
 import path from "path";
 import fs from "fs";

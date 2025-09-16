@@ -1,7 +1,7 @@
 // models/jobOfferModel.js
 import db from "../config/db.js";
 import camelcaseKeys from "camelcase-keys";
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 
 class JobOffer extends BaseModel {
 	constructor() {

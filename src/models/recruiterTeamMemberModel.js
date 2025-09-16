@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 
 class RecruiterTeamMember extends BaseModel {
 	constructor() {

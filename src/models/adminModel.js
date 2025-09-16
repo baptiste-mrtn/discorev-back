@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 import { withMedias } from "../helpers/withMedias.js";
 import { enrichModel } from "../helpers/enrichModel.js";
 
