@@ -33,6 +33,7 @@ jobs:
                     -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
                     --exclude='.env' \
                     --exclude='node_modules' \
+                    --exclude='sync/backups' \
                     ./ ubuntu@$VPS_IP:/var/www/discorev-back/
 
             - name: Install dependencies, migrate DB and restart server

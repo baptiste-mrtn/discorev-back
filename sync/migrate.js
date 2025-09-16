@@ -51,7 +51,7 @@ function backupIfExistsSync() {
 	const dumpCmd = `mysqldump -h "${DB_HOST}" -u "${DB_USER}" --password="${DB_PASS}" "${DB_NAME}" > "${backupFile}"`;
 	const execArgs = { shell: SHELL, stdio: "inherit" };
 
-	execSync(process.platform === "win32" ? dumpCmd : `-lc ${dumpCmd}`, execArgs);
+	execSync(process.platform === "win32" ? dumpCmd : `${dumpCmd}`, execArgs);
 	console.log("✅ Sauvegarde OK");
 }
 
