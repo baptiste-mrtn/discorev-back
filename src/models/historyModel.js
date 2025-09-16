@@ -1,5 +1,5 @@
 import dbHelpers from "../helpers/dbHelpers.js";
-import BaseModel from "./BaseModel.js";
+import BaseModel from "./baseModel.js";
 
 class History extends BaseModel {
 	constructor() {

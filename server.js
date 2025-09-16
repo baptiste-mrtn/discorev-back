@@ -21,7 +21,7 @@ import historyRoutes from "./src/routes/historyRoutes.js";
 
 import crudRoutes from "./src/routes/crudRoutes.js";
 import BaseController from "./src/controllers/baseController.js";
-import BaseModel from "./src/models/BaseModel.js";
+import BaseModel from "./src/models/baseModel.js";
 
 import errorHandler from "./src/middlewares/errorHandler.js";
 import sanitizeRequest from "./src/middlewares/sanitizerMiddleware.js";
