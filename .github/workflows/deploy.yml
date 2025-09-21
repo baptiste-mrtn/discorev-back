@@ -1,88 +1,61 @@
-name: Deploy Laravel Front
+name: Deploy to VPS
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    deploy:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Install PHP & Composer
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, bcmath, intl, pdo_mysql
-          tools: composer:v2
+            - name: Install rsync (just in case)
+              run: sudo apt-get update && sudo apt-get install -y rsync
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+            - name: Copy files to VPS (exclude .env & node_modules)
+              env:
+                  SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
+                  VPS_IP: ${{ secrets.VPS_IPV4 }}
+                  VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
 
-      - name: Install JS dependencies & build assets
-        run: |
-          npm ci
-          npm run build
+              run: |
+                  mkdir -p ~/.ssh
+                  echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+                  chmod 600 ~/.ssh/id_rsa
+                  ssh-keyscan -p $VPS_PORT -H $VPS_IP >> ~/.ssh/known_hosts
 
-      - name: Install PHP dependencies
-        run: |
-          composer install --no-dev --optimize-autoloader
+                  # Synchronisation sans écraser .env et node_modules
+                  rsync -avz --delete \
+                    -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
+                    --exclude='.env' \
+                    --exclude='node_modules' \
+                    --exclude='sync/backups' \
+                    ./ ubuntu@$VPS_IP:/var/www/discorev-back/
 
-      - name: Prepare SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
-          VPS_IP: ${{ secrets.VPS_IPV4 }}
-          VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p $VPS_PORT -H $VPS_IP >> ~/.ssh/known_hosts
+            - name: Install dependencies, migrate DB and restart server
+              env:
+                  SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_DEPLOY_KEY }}
+                  VPS_IP: ${{ secrets.VPS_IPV4 }}
+                  VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
 
-      - name: Deploy to VPS
-        env:
-          VPS_IP: ${{ secrets.VPS_IPV4 }}
-          VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
-        run: |
-          rsync -avz --delete \
-            -e "ssh -p $VPS_PORT -i ~/.ssh/id_rsa" \
-            --exclude='.env' \
-            --exclude='node_modules' \
-            --exclude='storage/logs/*' \
-            ./ ubuntu@$VPS_IP:/var/www/discorev-front/
+              run: |
+                  ssh -p $VPS_PORT -i ~/.ssh/id_rsa ubuntu@$VPS_IP << 'EOF'
+                    cd /var/www/discorev-back
 
-      - name: Post-deploy setup
-        env:
-          VPS_IP: ${{ secrets.VPS_IPV4 }}
-          VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
-        run: |
-          ssh -p $VPS_PORT -i ~/.ssh/id_rsa ubuntu@$VPS_IP << 'EOF'
-            cd /var/www/discorev-front
+                    # Charger NVM pour rendre npm/npx disponibles
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            echo "📦 Fix permissions..."
-            sudo chown -R www-data:www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
+                    echo "📦 Installation des dépendances..."
+                    npm install --omit=dev
 
-            echo "🔑 Ensure app key exists..."
-            if ! grep -q "APP_KEY=" .env || grep -q "APP_KEY=$" .env; then
-              php artisan key:generate --force
-            fi
+                    echo "🔄 Lancement des migrations..."
+                    npm run migrate
 
-            echo "🧹 Clear & optimize caches..."
-            php artisan config:clear
-            php artisan route:clear
-            php artisan cache:clear
-            php artisan view:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            echo "🚀 Restarting PHP-FPM..."
-            sudo systemctl reload php8.3-fpm
-          EOF
+                    echo "🚀 Redémarrage du serveur..."
+                    pm2 restart discorev || pm2 start server.js --name discorev
+                  EOF
