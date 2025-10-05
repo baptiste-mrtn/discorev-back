@@ -51,6 +51,16 @@ class RecruiterTeamMemberController extends BaseController {
 			next(err);
 		}
 	};
+
+	delete = async (req, res, next) => {
+		try {
+			const { id, memberId } = req.params;
+			await this.model.deleteByRecruiter(id, memberId);
+			res.status(200).json({ message: "Deleted successfully", data: { id, memberId } });
+		} catch (err) {
+			next(err);
+		}
+	};
 }
 
 export default new RecruiterTeamMemberController();

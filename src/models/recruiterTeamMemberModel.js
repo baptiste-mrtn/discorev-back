@@ -44,6 +44,13 @@ class RecruiterTeamMember extends BaseModel {
 			values
 		);
 	}
+
+	async deleteByRecruiter(recruiterId, memberId) {
+		await db.execute(`DELETE FROM ${this.table} WHERE recruiter_id = ? AND id = ?`, [
+			recruiterId,
+			memberId
+		]);
+	}
 }
 
 export default new RecruiterTeamMember();

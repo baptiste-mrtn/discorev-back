@@ -24,6 +24,6 @@ router.get("/:id/team", RecruiterTeamMemberController.getTeamMembers);
 router.post("/:id/team", authenticateToken, RecruiterTeamMemberController.create);
 router.post("/:id/team/bulk", authenticateToken, RecruiterTeamMemberController.addTeamMembersBulk);
 router.put("/:id/team/:memberId", authenticateToken, RecruiterTeamMemberController.update);
-router.delete("/:id/team", authenticateToken, RecruiterTeamMemberController.delete);
+router.delete("/:id/team/:memberId", authenticateToken, RecruiterTeamMemberController.delete);
 
 export default router;
