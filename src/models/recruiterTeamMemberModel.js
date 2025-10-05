@@ -18,7 +18,7 @@ class RecruiterTeamMember extends BaseModel {
 	}
 
 	async getGroupedTeamMembers(recruiterId) {
-		const rows = await this.findAll({ recruiterId });
+		const rows = await this.getAll({ recruiterId });
 
 		// Regrouper par recruiterId
 		return rows.reduce((acc, member) => {

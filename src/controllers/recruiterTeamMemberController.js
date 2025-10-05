@@ -8,7 +8,7 @@ class RecruiterTeamMemberController extends BaseController {
 	getTeamMembers = async (req, res) => {
 		try {
 			const recruiterId = req.params.id;
-			const members = await RecruiterTeamMember.getMembersByRecruiterId(recruiterId);
+			const members = await RecruiterTeamMember.getGroupedTeamMembers(recruiterId);
 			res.status(200).json(members);
 		} catch (err) {
 			console.error(err);
