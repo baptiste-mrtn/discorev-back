@@ -29,6 +29,21 @@ class RecruiterTeamMember extends BaseModel {
 			return acc;
 		}, {});
 	}
+
+	async updateByRecruiter(recruiterId, memberId, data) {
+		const snakeData = snakecaseKeys(data);
+		const setClause = Object.keys(snakeData)
+			.map((key) => `${key} = ?`)
+			.join(", ");
+		const values = [...Object.values(snakeData), recruiterId, memberId];
+
+		await db.execute(
+			`UPDATE ${this.table} 
+		 SET ${setClause} 
+		 WHERE recruiter_id = ? AND id = ?`,
+			values
+		);
+	}
 }
 
 export default new RecruiterTeamMember();

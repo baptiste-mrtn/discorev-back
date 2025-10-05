@@ -32,6 +32,25 @@ class RecruiterTeamMemberController extends BaseController {
 			res.status(500).json({ message: "Erreur serveur" });
 		}
 	};
+
+	update = async (req, res, next) => {
+		try {
+			const recruiterId = req.params.id;
+			const memberId = req.params.memberId;
+			const memberData = req.body; // ou req.body.member si tu l’envoies comme ça
+
+			await this.model.updateByRecruiter(recruiterId, memberId, memberData);
+
+			console.log(`✅ Updated member ${memberId} for recruiter ${recruiterId}`);
+
+			res.status(200).json({
+				message: "Updated successfully",
+				data: { recruiterId, memberId }
+			});
+		} catch (err) {
+			next(err);
+		}
+	};
 }
 
 export default new RecruiterTeamMemberController();
