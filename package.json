@@ -6,6 +6,7 @@
 	"scripts": {
 		"backup": "node sync/backup.js",
 		"migrate": "node sync/migrate.js",
+		"seed": "node sync/seed.js",
 		"test": "jest",
 		"start": "node server.js"
 	},

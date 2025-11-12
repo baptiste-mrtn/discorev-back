@@ -18,6 +18,7 @@ import jobOfferRoutes from "./src/routes/jobOfferRoutes.js";
 import recruiterRoutes from "./src/routes/recruiterRoutes.js";
 import applicationRoutes from "./src/routes/applicationRoutes.js";
 import historyRoutes from "./src/routes/historyRoutes.js";
+import tagRoutes from "./src/routes/tagRoutes.js";
 
 import crudRoutes from "./src/routes/crudRoutes.js";
 import BaseController from "./src/controllers/baseController.js";
@@ -128,6 +129,7 @@ const GENERIC_TABLES = [
 		}
 	}
 ];
+
 GENERIC_TABLES.forEach(async ({ name, middlewares }) => {
 	// Chemins potentiels
 	const modelPath = path.resolve(`./models/${name}Model.js`);
@@ -170,6 +172,7 @@ app.use("/job_offers", jobOfferRoutes);
 app.use("/recruiters", recruiterRoutes);
 app.use("/applications", applicationRoutes);
 app.use("/histories", historyRoutes);
+app.use("/tags", tagRoutes);
 
 app.use(errorHandler);
 
