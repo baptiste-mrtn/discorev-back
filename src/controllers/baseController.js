@@ -1,6 +1,35 @@
 class BaseController {
 	constructor(model) {
 		this.model = model;
+		this.enableLogs = options.enableLogs ?? true; // true par défaut
+	}
+
+	async logAction(req, actionType, relatedId = null, details = null) {
+		if (!this.enableLogs) return; // ⛔ évite les boucles
+
+		const RELATED_TYPE_MAP = {
+			users: "profile",
+			candidates: "profile",
+			recruiters: "profile",
+			job_offers: "job_offer",
+			documents: "document",
+			messages: "message",
+			histories: "other"
+		};
+
+		const relatedType = RELATED_TYPE_MAP[this.model.table] || "other";
+
+		try {
+			await History.logAction({
+				userId: req.user?.id || null,
+				relatedId,
+				relatedType,
+				actionType,
+				details
+			});
+		} catch (err) {
+			console.error("Error while logging history:", err);
+		}
 	}
 
 	getAll = async (req, res, next) => {
@@ -40,6 +69,12 @@ class BaseController {
 	create = async (req, res, next) => {
 		try {
 			const item = await this.model.create(req.body);
+			await this.logAction(
+				req,
+				"create",
+				id,
+				`Item created with id ${item} in ${this.model.table}`
+			);
 			console.log(`Created new item in ${this.model.table}`);
 			res.status(201).json({ message: "Created successfully", data: { id: item } });
 		} catch (err) {
@@ -50,6 +85,12 @@ class BaseController {
 	update = async (req, res, next) => {
 		try {
 			const item = await this.model.update(req.params.id, req.body);
+			await this.logAction(
+				req,
+				"update",
+				req.params.id,
+				`Updated item with ID ${req.params.id} in ${this.model.table}`
+			);
 			console.log(`Updated item with ID ${req.params.id} in ${this.model.table}`);
 
 			// Même logique
@@ -65,6 +106,12 @@ class BaseController {
 	delete = async (req, res, next) => {
 		try {
 			const result = await this.model.delete(req.params.id);
+			await this.logAction(
+				req,
+				"delete",
+				req.params.id,
+				`Deleted item with ID ${req.params.id} from ${this.model.table}`
+			);
 			console.log(`Deleted item with ID ${req.params.id} from ${this.model.table}`);
 			res.status(200).json({ message: "Deleted successfully", data: result });
 		} catch (err) {

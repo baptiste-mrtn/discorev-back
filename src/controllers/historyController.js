@@ -2,8 +2,9 @@ import History from "../models/historyModel.js";
 import BaseController from "./baseController.js";
 class HistoryController extends BaseController {
 	constructor() {
-		super(History);
+		super(History, { enableLogs: false }); // 🚫 très important !
 	}
+
 	logAction = async (req, res) => {
 		const { userId, relatedId, relatedType, actionType, details } = req.body;
 
