@@ -28,7 +28,7 @@ import errorHandler from "./src/middlewares/errorHandler.js";
 import sanitizeRequest from "./src/middlewares/sanitizerMiddleware.js";
 import caseConverter from "./src/middlewares/caseConverter.js";
 import authenticateToken from "./src/middlewares/authMiddleware.js";
-import isAdmin from "./src/middlewares/isAdmin.js";
+import { isAdmin, isAdminLevel, isRecruiter } from "./src/middlewares/roles.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -79,9 +79,9 @@ const GENERIC_TABLES = [
 			getAll: [authenticateToken, isAdmin],
 			getOne: [authenticateToken, isAdmin],
 			getOneByUserId: [authenticateToken, isAdmin],
-			create: [authenticateToken, isAdmin],
-			update: [authenticateToken, isAdmin],
-			delete: [authenticateToken, isAdmin]
+			create: [authenticateToken, isAdmin, isAdminLevel("super-admin")],
+			update: [authenticateToken, isAdmin, isAdminLevel("super-admin")],
+			delete: [authenticateToken, isAdmin, isAdminLevel("super-admin")]
 		}
 	},
 	{
@@ -90,9 +90,9 @@ const GENERIC_TABLES = [
 			getAll: [],
 			getOne: [],
 			getOneByUserId: [authenticateToken],
-			create: [authenticateToken],
-			update: [authenticateToken],
-			delete: [authenticateToken]
+			create: [authenticateToken, isRecruiter, isAdmin],
+			update: [authenticateToken, isRecruiter, isAdmin],
+			delete: [authenticateToken, isRecruiter, isAdmin]
 		}
 	},
 	{
@@ -101,9 +101,9 @@ const GENERIC_TABLES = [
 			getAll: [],
 			getOne: [],
 			getOneByUserId: [authenticateToken],
-			create: [authenticateToken],
-			update: [authenticateToken],
-			delete: [authenticateToken]
+			create: [authenticateToken, isRecruiter, isAdmin],
+			update: [authenticateToken, isRecruiter, isAdmin],
+			delete: [authenticateToken, isRecruiter, isAdmin]
 		}
 	},
 	{

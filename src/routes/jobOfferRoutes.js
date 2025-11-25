@@ -1,9 +1,9 @@
 import express from "express";
 import authenticateToken from "../middlewares/authMiddleware.js";
-import isOwnerOrAdmin from "../middlewares/isOwnerOrAdmin.js";
-import isRecruiter from "../middlewares/isRecruiter.js";
-import optionalAuth from "../middlewares/optionalAuth.js";
+import { loadResource, checkOwnerOrRole } from "../middlewares/permissions.js";
+import { isRecruiter } from "../middlewares/roles.js";
 import jobOfferController from "../controllers/jobOfferController.js";
+import JobOffer from "../models/jobOfferModel.js";
 
 const router = express.Router();
 
@@ -14,20 +14,58 @@ const router = express.Router();
 router.get("/", jobOfferController.listActive);
 
 // Détail d’une offre active (si inactive → 404 pour le public).
-router.get("/:id", optionalAuth, jobOfferController.getPublicOne);
+router.get("/:id", jobOfferController.getPublicOne);
 
 // Auth (recruiter/admin)
 // Toutes les offres du recruteur connecté (actives/inactives/brouillons) — dashboard.
-router.get("/me", authenticateToken, isRecruiter, jobOfferController.listMine);
+router.get(
+	"/me",
+	authenticateToken,
+	isRecruiter,
+	loadResource(JobOffer),
+	checkOwnerOrRole(JobOffer, { adminLevels: ["admin", "super-admin"] }),
+	jobOfferController.listMine
+);
 
-router.post("/", authenticateToken, isRecruiter, jobOfferController.create);
-router.put("/:id", authenticateToken, isOwnerOrAdmin, jobOfferController.update);
+router.post(
+	"/",
+	authenticateToken,
+	isRecruiter,
+	jobOfferController.create
+);
+
+router.put(
+	"/:id",
+	authenticateToken,
+	loadResource(JobOffer),
+	checkOwnerOrRole(JobOffer, { adminLevels: ["admin", "super-admin"] }),
+	jobOfferController.update
+);
 
 // Update partiel (status, dates, etc.).
-router.patch("/:id", authenticateToken, isOwnerOrAdmin, jobOfferController.patch);
+router.patch(
+	"/:id",
+	authenticateToken,
+	loadResource(JobOffer),
+	checkOwnerOrRole(JobOffer, { adminLevels: ["admin", "super-admin"] }),
+	jobOfferController.patch
+);
 
 // Changement de statut rapide (ex: draft → active / archived).
-router.patch("/:id/status", authenticateToken, isOwnerOrAdmin, jobOfferController.changeStatus);
-router.delete("/:id", authenticateToken, isOwnerOrAdmin, jobOfferController.softDelete);
+router.patch(
+	"/:id/status",
+	authenticateToken,
+	loadResource(JobOffer),
+	checkOwnerOrRole(JobOffer, { adminLevels: ["admin", "super-admin"] }),
+	jobOfferController.changeStatus
+);
+
+router.delete(
+	"/:id",
+	authenticateToken,
+	loadResource(JobOffer),
+	checkOwnerOrRole(JobOffer, { adminLevels: ["admin", "super-admin"] }),
+	jobOfferController.softDelete
+);
 
 export default router;

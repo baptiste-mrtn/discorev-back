@@ -126,13 +126,13 @@ class JobOfferController extends BaseController {
 	// POST /job_offers
 	create = async (req, res, next) => {
 		try {
+			const recruiter = await Recruiter.getByUserId(req.user.id);
 			const payload = {
 				...req.body,
+				recruiterId: recruiter.id,
 				status: req.body.status ?? "draft",
 				publicationDate: req.body.status === "active" ? new Date() : null
 			};
-			console.log(payload);
-
 			const insertId = await this.model.create(payload);
 			res.status(201).json({ message: "Created successfully", data: { id: insertId } });
 		} catch (e) {

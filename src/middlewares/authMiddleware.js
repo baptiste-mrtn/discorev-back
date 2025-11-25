@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import Admin from "../models/adminModel.js";
 
 const authenticateToken = async (req, res, next) => {
 	const authHeader = req.headers["authorization"];
@@ -28,6 +29,15 @@ const authenticateToken = async (req, res, next) => {
 
 		delete user.password; // Supprime le mot de passe par sécurité
 		req.user = user;
+
+		// Si c'est un admin → on ajoute admin.role
+		if (user.account_type === "admin") {
+			const adminProfile = await Admin.getOneByUserId(user.id);
+			if (adminProfile) {
+				req.user.admin_role = adminProfile.role;
+				// super-admin | admin | moderator
+			}
+		}
 
 		next();
 	} catch (err) {

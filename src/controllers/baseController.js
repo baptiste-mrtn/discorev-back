@@ -1,5 +1,5 @@
 class BaseController {
-	constructor(model) {
+	constructor(model, options = {}) {
 		this.model = model;
 		this.enableLogs = options.enableLogs ?? true; // true par défaut
 	}

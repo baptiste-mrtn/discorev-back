@@ -3,6 +3,7 @@ import authenticateToken from "../middlewares/authMiddleware.js";
 import RecruiterController from "../controllers/recruiterController.js";
 import jobOfferController from "../controllers/jobOfferController.js";
 import RecruiterTeamMemberController from "../controllers/recruiterTeamMemberController.js";
+import { isAdmin, isRecruiter } from "../middlewares/roles.js";
 
 const router = express.Router();
 
@@ -21,9 +22,9 @@ router.get("/user/:userId", RecruiterController.getOneByUserId);
 router.get("/:id/job_offers", jobOfferController.listMine);
 
 router.get("/:id/team", RecruiterTeamMemberController.getTeamMembers);
-router.post("/:id/team", authenticateToken, RecruiterTeamMemberController.create);
-router.post("/:id/team/bulk", authenticateToken, RecruiterTeamMemberController.addTeamMembersBulk);
-router.put("/:id/team/:memberId", authenticateToken, RecruiterTeamMemberController.update);
-router.delete("/:id/team/:memberId", authenticateToken, RecruiterTeamMemberController.delete);
+router.post("/:id/team", authenticateToken, isRecruiter, RecruiterTeamMemberController.create);
+router.post("/:id/team/bulk", authenticateToken, isRecruiter, isAdmin, RecruiterTeamMemberController.addTeamMembersBulk);
+router.put("/:id/team/:memberId", authenticateToken, isRecruiter, isAdmin, RecruiterTeamMemberController.update);
+router.delete("/:id/team/:memberId", authenticateToken, isRecruiter, isAdmin, RecruiterTeamMemberController.delete);
 
 export default router;
