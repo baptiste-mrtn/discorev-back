@@ -48,7 +48,12 @@ function backupIfExistsSync() {
 
 	console.log(`📦 Sauvegarde de la BDD '${DB_NAME}' vers ${backupFile} ...`);
 
-	const dumpCmd = `mysqldump -h "${DB_HOST}" -u "${DB_USER}" --password="${DB_PASS}" "${DB_NAME}" > "${backupFile}"`;
+	const dumpCmd = `mysqldump \
+	--column-statistics=0 \
+	-h "${DB_HOST}" \
+	-u "${DB_USER}" \
+	--password="${DB_PASS}" \
+	"${DB_NAME}" > "${backupFile}"`;
 	const execArgs = { shell: SHELL, stdio: "inherit" };
 
 	execSync(process.platform === "win32" ? dumpCmd : `${dumpCmd}`, execArgs);
