@@ -59,18 +59,18 @@ export function checkRole({ accountTypes = [], adminRoles = [] }) {
 		if (!user) return res.status(401).json({ message: "Not authenticated" });
 
 		// Admin case
-		if (user.account_type === "admin") {
-			if (!user.admin_role) {
+		if (user.accountType === "admin") {
+			if (!user.adminRole) {
 				return res.status(500).json({ message: "Admin role missing on user" });
 			}
 
-			if (adminRoles.includes(user.admin_role)) {
+			if (adminRoles.includes(user.adminRole)) {
 				return next();
 			}
 		}
 
 		// Non-admin roles check
-		if (accountTypes.includes(user.account_type)) {
+		if (accountTypes.includes(user.accountType)) {
 			return next();
 		}
 
@@ -86,11 +86,11 @@ export function checkAdminLevel(...allowedLevels) {
 		const user = req.user;
 
 		if (!user) return res.status(401).json({ message: "Not authenticated" });
-		if (user.account_type !== "admin") {
+		if (user.accountType !== "admin") {
 			return res.status(403).json({ message: "Forbidden" });
 		}
 
-		if (!allowedLevels.includes(user.admin_role)) {
+		if (!allowedLevels.includes(user.adminRole)) {
 			return res.status(403).json({ message: "Insufficient privileges" });
 		}
 
@@ -119,8 +119,10 @@ export function checkOwnerOrRole(model, { adminLevels = [] } = {}) {
 			return res.status(500).json({ message: "Ownership not configured for this resource" });
 		}
 
+		console.log(user);
+
 		// ADMIN OVERRIDE
-		if (user.account_type === "admin" && adminLevels.includes(user.admin_role)) {
+		if (user.accountType === "admin" && adminLevels.includes(user.adminRole)) {
 			return next();
 		}
 

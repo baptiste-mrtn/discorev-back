@@ -148,6 +148,7 @@ class JobOfferController extends BaseController {
 				...req.body,
 				publicationDate: req.body.status === "active" ? new Date() : null
 			};
+			console.log(req.body);
 			await this.model.update(id, body);
 			res.status(200).json({ message: "Updated successfully", data: { id } });
 		} catch (e) {

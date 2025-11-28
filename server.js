@@ -127,6 +127,17 @@ const GENERIC_TABLES = [
 			update: [authenticateToken],
 			delete: [authenticateToken]
 		}
+	},
+	{
+		name: "payments",
+		middlewares: {
+			getAll: [authenticateToken],
+			getOne: [authenticateToken],
+			getOneByUserId: [authenticateToken],
+			create: [authenticateToken],
+			update: [authenticateToken],
+			delete: [authenticateToken]
+		}
 	}
 ];
 
