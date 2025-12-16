@@ -1,9 +1,7 @@
 import express from "express";
 import authenticateToken from "../middlewares/authMiddleware.js";
-import { loadResource, checkOwnerOrRole } from "../middlewares/permissions.js";
 import { isAdmin, isRecruiter } from "../middlewares/roles.js";
 import jobOfferController from "../controllers/jobOfferController.js";
-import JobOffer from "../models/jobOfferModel.js";
 
 const router = express.Router();
 

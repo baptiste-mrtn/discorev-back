@@ -29,28 +29,6 @@ export const OWNERSHIP_MAP = {
 };
 
 // -----------------------------
-// loadResource(model)
-// -----------------------------
-export function loadResource(model) {
-	return async (req, res, next) => {
-		try {
-			const id = req.params.id;
-			const resource = await model.getById(id);
-
-			if (!resource) {
-				return res.status(404).json({ message: "Resource not found" });
-			}
-
-			req.resource = resource;
-			next();
-		} catch (error) {
-			console.error(error);
-			return res.status(500).json({ message: "Error loading resource" });
-		}
-	};
-}
-
-// -----------------------------
 // checkRole()
 // -----------------------------
 export function checkRole({ accountTypes = [], adminRoles = [] }) {

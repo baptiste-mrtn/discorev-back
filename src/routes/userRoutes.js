@@ -1,11 +1,12 @@
 import express from "express";
 import UserController from "../controllers/userController.js";
 import authenticateToken from "../middlewares/authMiddleware.js";
+import { isAdmin } from "../middlewares/roles.js";
 
 const router = express.Router();
 
 // Routes utilisateurs
-router.get("/", authenticateToken, UserController.getAll);
+router.get("/", authenticateToken, isAdmin, UserController.getAll);
 router.get("/:id", authenticateToken, UserController.getOne);
 router.get("/email/:email", authenticateToken, UserController.getOneByEmail);
 router.put("/:id", authenticateToken, UserController.update);

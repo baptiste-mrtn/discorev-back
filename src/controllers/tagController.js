@@ -1,7 +1,6 @@
 import db from "../config/db.js";
 
 class TagController {
-
 	// GET /tags/approved
 	getApprovedOnly = async (req, res, next) => {
 		try {
@@ -38,6 +37,7 @@ class TagController {
 				tc.name AS category_name,
 				t.id AS tag_id,
 				t.name AS tag_name,
+				t.slug AS tag_slug,
 				t.approved
 			FROM tag_categories tc
 			LEFT JOIN tags t ON t.category_id = tc.id
@@ -51,6 +51,7 @@ class TagController {
 					grouped[r.category_name].push({
 						id: r.tag_id,
 						name: r.tag_name,
+						slug: r.tag_slug,
 						approved: !!r.approved
 					});
 				}
@@ -147,9 +148,22 @@ class TagController {
 
 	async approveTag(req, res, next) {
 		const { id } = req.params;
+
 		try {
-			await db.query(`UPDATE tags SET approved = 1 WHERE id = ?`, [id]);
-			res.status(200).json({ message: "Tag approved" });
+			// 1️⃣ Récupérer l'état actuel
+			const [[tag]] = await db.query("SELECT approved FROM tags WHERE id = ?", [id]);
+
+			if (!tag) {
+				return res.status(404).json({ message: "Tag not found" });
+			}
+
+			// 2️⃣ Toggle
+			const newValue = !tag.approved;
+
+			await db.query("UPDATE tags SET approved = ? WHERE id = ?", [newValue, id]);
+
+			// 3️⃣ Retourner le nouvel état
+			res.status(200).json({ approved: newValue });
 		} catch (err) {
 			next(err);
 		}
