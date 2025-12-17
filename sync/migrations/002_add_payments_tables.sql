@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS plans (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
     price_month DECIMAL(8, 2) DEFAULT 0,
     price_year DECIMAL(8, 2) DEFAULT 0,
     commitment VARCHAR(50),

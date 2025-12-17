@@ -1,5 +1,6 @@
 INSERT INTO plans (
         name,
+        slug,
         price_month,
         price_year,
         commitment,
@@ -10,6 +11,7 @@ INSERT INTO plans (
     )
 VALUES (
         "Freemium",
+        "freemium",
         0,
         0,
         NULL,
@@ -24,6 +26,7 @@ VALUES (
     ),
     (
         "Connect 2",
+        "connect-2",
         29,
         0,
         NULL,
@@ -38,6 +41,7 @@ VALUES (
     ),
     (
         "Connect 4",
+        "connect-4",
         39,
         0,
         NULL,
@@ -52,6 +56,7 @@ VALUES (
     ),
     (
         "Connect +",
+        "connect-plus",
         79,
         0,
         NULL,
@@ -66,6 +71,7 @@ VALUES (
     ),
     (
         "Premium - Marque Employeur",
+        "premium-marque-employeur",
         0,
         1890,
         "1 an",
