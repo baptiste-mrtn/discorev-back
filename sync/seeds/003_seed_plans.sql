@@ -81,5 +81,17 @@ VALUES (
         ),
         true
     ) ON DUPLICATE KEY
-UPDATE name =
-VALUES(name);
+UPDATE price_month =
+VALUES(price_month),
+    price_year =
+VALUES(price_year),
+    commitment =
+VALUES(commitment),
+    credits =
+VALUES(credits),
+    ad_duration_hours =
+VALUES(ad_duration_hours),
+    features =
+VALUES(features),
+    is_active =
+VALUES(is_active);
