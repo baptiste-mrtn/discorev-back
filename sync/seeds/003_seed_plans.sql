@@ -80,4 +80,6 @@ VALUES (
             "Accès prioritaire aux nouvelles features - CVthèque"
         ),
         true
-    );
+    ) ON DUPLICATE KEY
+UPDATE name =
+VALUES(name);
